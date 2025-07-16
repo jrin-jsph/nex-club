@@ -1,0 +1,18 @@
+# === Java compiled files ===
+*.class
+*.class~
+
+# === BlueJ metadata files ===
+*.ctxt
+*.pkg
+*.obj
+bluej.pkg
+bluej.pref
+bluej.debug
+bluej.diagram
+
+# === Temporary / backup files ===
+*.log
+*.tmp
+*.bak
+*~

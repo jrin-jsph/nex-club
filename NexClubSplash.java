@@ -107,10 +107,10 @@ public class NexClubSplash extends JWindow {
     private void initializeDatabase() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection rootConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/?useSSL=false", "root", "admin");
+            Connection rootConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/?useSSL=false", "root", "Madhav@2006");
             Statement stmt = rootConn.createStatement();
             stmt.executeUpdate("CREATE DATABASE IF NOT EXISTS nexclub");
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/nexclub?useSSL=false", "root", "admin");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/nexclub?useSSL=false", "root", "Madhav@2006");
 
             Statement s = connection.createStatement();
 

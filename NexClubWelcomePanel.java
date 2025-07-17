@@ -8,19 +8,17 @@ public class NexClubWelcomePanel {
 
     public static void show(JFrame parent) {
         parent.setTitle("Nexclub");
-        parent.setExtendedState(JFrame.MAXIMIZED_BOTH); // Make window fullscreen (logical size)
+        parent.setExtendedState(JFrame.MAXIMIZED_BOTH); // Fullscreen
 
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(40, 60, 40, 60));
         panel.setBackground(Color.WHITE);
 
-        // Large heading (30% bigger than original)
         JLabel heading = new JLabel();
         heading.setFont(new Font("Segoe UI", Font.BOLD, 42));
         heading.setBorder(BorderFactory.createEmptyBorder(0, 0, 30, 0));
         panel.add(heading, BorderLayout.NORTH);
 
-        // Content panel with fade-in capability
         JPanel contentPanel = new JPanel(new BorderLayout());
         contentPanel.setOpaque(false);
 
@@ -51,7 +49,6 @@ public class NexClubWelcomePanel {
         contentPanel.add(contentLabel, BorderLayout.CENTER);
         panel.add(contentPanel, BorderLayout.CENTER);
 
-        // Next button (10% larger)
         JButton nextButton = new JButton("Next");
         nextButton.setContentAreaFilled(false);
         nextButton.setBorder(null);
@@ -59,7 +56,15 @@ public class NexClubWelcomePanel {
         nextButton.setForeground(Color.BLACK);
         nextButton.setPreferredSize(new Dimension(110, 44));
         nextButton.setFocusPainted(false);
-        nextButton.addActionListener(e -> JOptionPane.showMessageDialog(parent, "Next functionality here"));
+
+        // Updated action: switch to sProfileUI
+        nextButton.addActionListener(e -> {
+            parent.getContentPane().removeAll();
+            sProfileUI profileUI = new sProfileUI();
+            parent.getContentPane().add(profileUI.getMainPanel());
+            parent.revalidate();
+            parent.repaint();
+        });
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setBackground(Color.WHITE);

@@ -3,10 +3,8 @@ import java.awt.*;
 import com.formdev.flatlaf.FlatLightLaf;
 
 public class sProfileUI {
-    private JPanel mainPanel;
-
-    public sProfileUI() {
-        mainPanel = new JPanel();
+    public static void show(JFrame parent) {
+        JPanel mainPanel = new JPanel();
         mainPanel.setBackground(Color.WHITE);
         mainPanel.setLayout(new GridBagLayout());
 
@@ -22,7 +20,6 @@ public class sProfileUI {
         gbc.gridy = row++;
         gbc.gridwidth = 2;
         mainPanel.add(title, gbc);
-
         gbc.gridwidth = 1;
 
         String[] labels = {
@@ -46,19 +43,21 @@ public class sProfileUI {
             row++;
         }
 
-        // Add Profile Picture Upload (Optional)
+        // Profile Picture Upload
         gbc.gridx = 0;
         gbc.gridy = row;
         gbc.gridwidth = 2;
         JButton uploadPic = new JButton("Upload Profile Picture");
         mainPanel.add(uploadPic, gbc);
+
+        // Replace current frame content
+        parent.getContentPane().removeAll();
+        parent.getContentPane().add(mainPanel);
+        parent.revalidate();
+        parent.repaint();
     }
 
-    public JPanel getMainPanel() {
-        return mainPanel;
-    }
-
-    // For testing directly
+    // Test standalone (optional)
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel(new FlatLightLaf());
@@ -69,10 +68,7 @@ public class sProfileUI {
         JFrame frame = new JFrame("Student Profile");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-
-        sProfileUI profileUI = new sProfileUI();
-        frame.getContentPane().add(profileUI.getMainPanel());
-
+        sProfileUI.show(frame);
         frame.setVisible(true);
     }
 }

@@ -57,13 +57,9 @@ public class NexClubWelcomePanel {
         nextButton.setPreferredSize(new Dimension(110, 44));
         nextButton.setFocusPainted(false);
 
-        // Updated action: switch to sProfileUI
+        // ✅ Updated to show student profile page
         nextButton.addActionListener(e -> {
-            parent.getContentPane().removeAll();
-            sProfileUI profileUI = new sProfileUI();
-            parent.getContentPane().add(profileUI.getMainPanel());
-            parent.revalidate();
-            parent.repaint();
+            sProfileUI.show(parent);  // <-- New behavior
         });
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));

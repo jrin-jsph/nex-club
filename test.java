@@ -7,7 +7,7 @@
  */
 public class test
 {
-    // Hello instance variables - replace the example below with your own
+    // Hello instance variables madhav - replace the example below with your own
     private int x;
 
     /**

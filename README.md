@@ -44,12 +44,3 @@ This project demonstrates key programming concepts such as:
 - Database management and integration
 
 It is ideal for academic use and can also serve as a foundational tool for real-world student club management systems.
-
----
-
-## 👥 Team Members
-
-- Jerrin Joseph
-- Madhav MP
-- Bisni KB
-- Ann Mary Chacko

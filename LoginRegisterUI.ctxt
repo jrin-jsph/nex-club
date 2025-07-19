@@ -1,0 +1,15 @@
+#BlueJ class context
+comment0.target=LoginRegisterUI
+comment1.params=parent
+comment1.target=void\ show(javax.swing.JFrame)
+comment2.params=g
+comment2.target=void\ paintComponent(java.awt.Graphics)
+comment3.params=evt
+comment3.target=void\ keyReleased(java.awt.event.KeyEvent)
+comment4.params=e
+comment4.target=void\ mouseClicked(java.awt.event.MouseEvent)
+comment5.params=e
+comment5.target=void\ mouseClicked(java.awt.event.MouseEvent)
+comment6.params=e
+comment6.target=void\ mouseClicked(java.awt.event.MouseEvent)
+numComments=7

@@ -9,7 +9,7 @@ public class LoginRegisterUI {
 
     public static void show(JFrame parent) {
         parent.setTitle("Nexclub");
-        parent.setIconImage(new ImageIcon("l2.png").getImage());
+        parent.setIconImage(new ImageIcon("logo/l2.png").getImage());
 
         if (!parent.isDisplayable()) {
             parent.setUndecorated(false);

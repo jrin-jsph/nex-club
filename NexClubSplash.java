@@ -21,7 +21,7 @@ public class NexClubSplash extends JWindow {
         setLocationRelativeTo(null);
         setBackground(new Color(0, 0, 0, 0));
 
-        ImageIcon rawIcon = new ImageIcon("1.png");
+        ImageIcon rawIcon = new ImageIcon("logo/1.png");
         Image scaledImg = rawIcon.getImage().getScaledInstance(200, 200, Image.SCALE_SMOOTH);
         ImageIcon logo = new ImageIcon(scaledImg);
 
@@ -94,7 +94,7 @@ public class NexClubSplash extends JWindow {
         initializeDatabase();
 
         JFrame main = new JFrame("NexClub App");
-        main.setIconImage(new ImageIcon("l2.png").getImage());
+        main.setIconImage(new ImageIcon("logo/l2.png").getImage());
         main.setSize(1024, 576);
         main.setLocationRelativeTo(null);
         main.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

@@ -2,6 +2,12 @@
 comment0.target=sProfileUI
 comment1.params=parent
 comment1.target=void\ show(javax.swing.JFrame)
-comment2.params=args
-comment2.target=void\ main(java.lang.String[])
-numComments=3
+comment2.params=
+comment2.target=void\ run()
+comment3.params=title\ labels\ fields\ genderBox\ yearBox
+comment3.target=javax.swing.JPanel\ createStyledSection(java.lang.String,\ java.lang.String[],\ javax.swing.JTextField[],\ javax.swing.JComboBox,\ javax.swing.JComboBox)
+comment4.params=fieldName
+comment4.target=java.lang.String\ getValidationIcon(java.lang.String)
+comment5.params=fieldName
+comment5.target=java.awt.Color\ getValidationColor(java.lang.String)
+numComments=6

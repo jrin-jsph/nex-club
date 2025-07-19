@@ -6,6 +6,7 @@
 *.ctxt
 *.pkg
 *.obj
+*.bluej
 bluej.pkg
 bluej.pref
 bluej.debug

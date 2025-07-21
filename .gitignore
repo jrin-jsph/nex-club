@@ -10,6 +10,7 @@ bluej.pkg
 bluej.pref
 bluej.debug
 bluej.diagram
+package.bluej
 
 # === Temporary / backup files ===
 *.log

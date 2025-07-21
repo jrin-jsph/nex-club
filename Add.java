@@ -8,7 +8,7 @@
 public class Add
 {
     // instance variables - replace the example below with your own
-    private int x;
+    private int x1;
 
     /**
      * Constructor for objects of class Add
@@ -16,7 +16,7 @@ public class Add
     public Add()
     {
         // initialise instance variables
-        x = 0;
+        x1 = 0;
     }
 
     /**
@@ -28,6 +28,6 @@ public class Add
     public int sampleMethod(int y)
     {
         // put your code here
-        return x + y;
+        return x1 + y;
     }
 }

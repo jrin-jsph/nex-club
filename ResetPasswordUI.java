@@ -77,6 +77,30 @@ public class ResetPasswordUI {
                 BorderFactory.createEmptyBorder(10, 10, 10, 10)
         ));
 
+        // Add key listener to prevent deleting the prefix character
+        nIDField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE || e.getKeyCode() == KeyEvent.VK_DELETE) {
+                    if (nIDField.getText().length() <= 1) {
+                        e.consume(); // Prevent deleting the prefix character
+                    }
+                }
+            }
+
+            @Override
+            public void keyTyped(KeyEvent e) {
+                e.setKeyChar(Character.toUpperCase(e.getKeyChar()));
+            }
+            
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    nextButton.doClick();
+                }
+            }
+        });
+
         nextButton = new JButton("→");
         styleButton(nextButton);
         nextButton.setFont(new Font("Microsoft JhengHei", Font.BOLD, 14));
@@ -313,25 +337,22 @@ public class ResetPasswordUI {
             }
         });
 
-        nIDField.addKeyListener(new KeyAdapter() {
-            public void keyTyped(KeyEvent e) {
-                e.setKeyChar(Character.toUpperCase(e.getKeyChar()));
-            }
-            
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    nextButton.doClick();
-                }
-            }
-        });
-
         studentBtn.addActionListener(e -> {
-            nIDField.setText("S");
+            String currentText = nIDField.getText();
+            if (currentText.length() > 1) {
+                nIDField.setText("S" + currentText.substring(1));
+            } else {
+                nIDField.setText("S");
+            }
         });
 
         orgBtn.addActionListener(e -> {
-            nIDField.setText("I");
+            String currentText = nIDField.getText();
+            if (currentText.length() > 1) {
+                nIDField.setText("I" + currentText.substring(1));
+            } else {
+                nIDField.setText("I");
+            }
         });
 
         codeFields[5].addKeyListener(new KeyAdapter() {

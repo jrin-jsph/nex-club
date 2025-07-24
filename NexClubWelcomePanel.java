@@ -40,7 +40,7 @@ public class NexClubWelcomePanel {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
-                g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, contentAlpha));
+                g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, Math.max(0f, contentAlpha))));
                 super.paintComponent(g2);
                 g2.dispose();
             }
@@ -88,7 +88,7 @@ public class NexClubWelcomePanel {
                     }
                 } else {
                     if (contentAlpha < 1f) {
-                        contentAlpha += 0.05f;
+                        contentAlpha = Math.min(1f, contentAlpha + 0.05f); // Ensure alpha doesn't exceed 1.0
                         contentLabel.repaint();
                     } else {
                         cancel();

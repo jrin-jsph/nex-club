@@ -59,8 +59,9 @@ public class NexClubWelcomePanel {
 
         // ✅ Updated to show student profile page
         nextButton.addActionListener(e -> {
-            sProfileUI.show(parent);  // <-- New behavior
+         ProfileUpdaterApp.show(parent); // <-- Launch ProfileUpdaterApp
         });
+
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setBackground(Color.WHITE);

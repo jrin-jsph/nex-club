@@ -8,21 +8,19 @@ import java.util.Vector;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-public class ProfileUpdaterApp {
-    public static void show(JFrame parent) {
-    try {
-        UIManager.setLookAndFeel(new FlatLightLaf());
-    } catch (Exception ex) {
-        System.err.println("Failed to initialize FlatLaf");
-    }
+public class CopyOfProfileUpdaterApp {
+    public static void main(String[] args) {
+        try {
+            UIManager.setLookAndFeel(new FlatLightLaf());
+        } catch (Exception ex) {
+            System.err.println("Failed to initialize FlatLaf");
+        }
 
-    SwingUtilities.invokeLater(() -> {
-        MainFrame mainFrame = new MainFrame();
-        parent.setContentPane(mainFrame.getContentPane()); // ✅ switch view
-        parent.revalidate();
-        parent.repaint();
-    });
-}
+        SwingUtilities.invokeLater(() -> {
+            MainFrame mainFrame = new MainFrame();
+            mainFrame.setVisible(true);
+        });
+    }
 }
 
 class MainFrame extends JFrame {
@@ -135,14 +133,30 @@ class AcademicInfoPanel extends AbstractFormPanel {
         centerPanel.setBackground(Color.WHITE);
         Box contentBox = Box.createVerticalBox();
 
+        Box greetingBox = Box.createVerticalBox();
+        JLabel helloLabel = new JLabel("Hello, You!");
+        helloLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        helloLabel.setForeground(Color.BLACK);
+        helloLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel subLabel = new JLabel("Let's update the profile");
+        subLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        subLabel.setForeground(Color.GRAY);
+        subLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        greetingBox.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 0));
+        greetingBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        greetingBox.add(helloLabel);
+        greetingBox.add(subLabel);
+        add(greetingBox, BorderLayout.NORTH);
+
         JLabel sectionTitle = new JLabel("Academic Details");
         sectionTitle.setFont(sectionFont);
         sectionTitle.setBorder(BorderFactory.createEmptyBorder(20, 0, 12, 0));
         sectionTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // College ComboBox with default item
         JComboBox<String> collegeComboBox = new JComboBox<>();
-        collegeComboBox.addItem("-- Select College --");
+        collegeComboBox.setEditable(false);
         collegeComboBox.setFont(fieldFont);
         collegeComboBox.setMaximumSize(new Dimension(400, 50));
         collegeComboBox.setPreferredSize(new Dimension(400, 50));
@@ -159,18 +173,11 @@ class AcademicInfoPanel extends AbstractFormPanel {
             e.printStackTrace();
         }
 
-        // Degree and Branch ComboBoxes with default selections
-        JComboBox<String> degreeComboBox = createComboBox(
-            new String[] {"-- Select Degree --", "B.Tech", "M.Tech", "MBA", "BBA", "B.Sc", "M.Sc", "PhD"}, 300, 45);
-
-        JComboBox<String> branchComboBox = createComboBox(
-            new String[] {"-- Select Branch --", "Computer Science", "Mechanical Engineering", "Civil Engineering", "Electrical Engineering", "Electronics", "Chemical"}, 300, 45);
-
+        JComboBox<String> degreeComboBox = createComboBox(new String[] {"B.Tech", "M.Tech", "MBA", "BBA", "B.Sc", "M.Sc", "PhD"}, 300, 45);
+        JComboBox<String> branchComboBox = createComboBox(new String[] {"Computer Science", "Mechanical Engineering", "Civil Engineering", "Electrical Engineering", "Electronics", "Chemical"}, 300, 45);
         JTextField yearOfStudyField = createTextField();
 
         JLabel validationLabel = createValidationLabel();
-        validationLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        validationLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         JButton submitButton = createFlatButton("Submit");
         submitButton.addActionListener(e -> {
@@ -179,23 +186,8 @@ class AcademicInfoPanel extends AbstractFormPanel {
             String dob = MainFrame.basicDetails[2];
             String gender = MainFrame.basicDetails[3];
 
-            String selectedCollege = (String) collegeComboBox.getSelectedItem();
-            String selectedDegree = (String) degreeComboBox.getSelectedItem();
-            String selectedBranch = (String) branchComboBox.getSelectedItem();
-            String year = yearOfStudyField.getText().trim();
-
             if (fullName.isEmpty() || phone.isEmpty() || dob.isEmpty() || gender.isEmpty()) {
                 validationLabel.setText("Basic details are incomplete.");
-                validationLabel.setForeground(Color.RED);
-                return;
-            }
-
-            if (selectedCollege.equals("-- Select College --") ||
-                selectedDegree.equals("-- Select Degree --") ||
-                selectedBranch.equals("-- Select Branch --") ||
-                year.isEmpty()) {
-
-                validationLabel.setText("Please complete all academic fields.");
                 validationLabel.setForeground(Color.RED);
                 return;
             }
@@ -212,15 +204,16 @@ class AcademicInfoPanel extends AbstractFormPanel {
                     validationLabel.setForeground(Color.RED);
                 } else {
                     PreparedStatement insertStmt = conn.prepareStatement(
-                        "INSERT INTO Student(fullName, phone, dob, gender, college, degree, branch, yearOfStudy) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                        "INSERT INTO Student(fullName, phone, dob, gender, college, degree, branch, yearOfStudy) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+                    );
                     insertStmt.setString(1, fullName);
                     insertStmt.setString(2, phone);
                     insertStmt.setString(3, dob);
                     insertStmt.setString(4, gender);
-                    insertStmt.setString(5, selectedCollege);
-                    insertStmt.setString(6, selectedDegree);
-                    insertStmt.setString(7, selectedBranch);
-                    insertStmt.setString(8, year);
+                    insertStmt.setString(5, (String) collegeComboBox.getSelectedItem());
+                    insertStmt.setString(6, (String) degreeComboBox.getSelectedItem());
+                    insertStmt.setString(7, (String) branchComboBox.getSelectedItem());
+                    insertStmt.setString(8, yearOfStudyField.getText());
                     insertStmt.executeUpdate();
 
                     validationLabel.setText("Profile successfully submitted.");
@@ -261,5 +254,3 @@ class AcademicInfoPanel extends AbstractFormPanel {
         add(buttonPanel, BorderLayout.SOUTH);
     }
 }
-
-

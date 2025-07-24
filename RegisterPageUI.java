@@ -7,9 +7,8 @@ import java.sql.*;
 public class RegisterPageUI {
     public static void show(JFrame parent) {
         parent.setTitle("Nexclub");
-        //parent.setIconImage(new ImageIcon("icon.png").getImage());
 
-
+        // ✅ Always rebuild panels fresh
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBackground(Color.WHITE);
 
@@ -188,7 +187,6 @@ public class RegisterPageUI {
         registerBtn.setBorder(null);
         registerBtn.setForeground(Color.BLACK);
 
-        // ✅ Register logic to MySQL register table
         registerBtn.addActionListener(e -> {
             String email = emailField.getText().trim();
             String password = new String(passField.getPassword()).trim();
@@ -217,48 +215,58 @@ public class RegisterPageUI {
 
             if (!valid) return;
 
-            try {
-                Connection conn = NexClubSplash.getConnection();
+            // Store the form data for use in the callbacks
+            Runnable onAccept = () -> {
+                try {
+                    Connection conn = NexClubSplash.getConnection();
 
-                PreparedStatement checkStmt = conn.prepareStatement(
-                    "SELECT * FROM register WHERE nID = ? OR email = ?");
-                checkStmt.setString(1, fullID);
-                checkStmt.setString(2, email);
-                ResultSet rs = checkStmt.executeQuery();
+                    PreparedStatement checkStmt = conn.prepareStatement(
+                        "SELECT * FROM register WHERE nID = ? OR email = ?");
+                    checkStmt.setString(1, fullID);
+                    checkStmt.setString(2, email);
+                    ResultSet rs = checkStmt.executeQuery();
 
-                if (rs.next()) {
-                    if (fullID.equals(rs.getString("nID"))) {
-                        idWarning.setText("This ID is already registered.");
-                    } else {
-                        emailWarning.setText("This email is already registered.");
+                    if (rs.next()) {
+                        if (fullID.equals(rs.getString("nID"))) {
+                            idWarning.setText("This ID is already registered.");
+                        } else {
+                            emailWarning.setText("This email is already registered.");
+                        }
+                        rs.close();
+                        checkStmt.close();
+                        return;
                     }
                     rs.close();
                     checkStmt.close();
-                    return;
+
+                    PreparedStatement insertStmt = conn.prepareStatement(
+                        "INSERT INTO register (nID, email, Password) VALUES (?, ?, ?)");
+                    insertStmt.setString(1, fullID);
+                    insertStmt.setString(2, email);
+                    insertStmt.setString(3, password);
+                    insertStmt.executeUpdate();
+                    insertStmt.close();
+
+                    successLabel.setText("Registered Successfully");
+
+                    Timer timer = new Timer(2000, evt -> {
+                        ((Timer) evt.getSource()).stop();
+                        SwingUtilities.invokeLater(() -> LoginRegisterUI.show(parent));
+                    });
+                    timer.setRepeats(false);
+                    timer.start();
+
+                } catch (SQLException ex) {
+                    successLabel.setText("Registration failed: " + ex.getMessage());
                 }
-                rs.close();
-                checkStmt.close();
+            };
 
-                PreparedStatement insertStmt = conn.prepareStatement(
-                    "INSERT INTO register (nID, email, Password) VALUES (?, ?, ?)");
-                insertStmt.setString(1, fullID);
-                insertStmt.setString(2, email);
-                insertStmt.setString(3, password);
-                insertStmt.executeUpdate();
-                insertStmt.close();
+            Runnable onDecline = () -> {
+                LoginRegisterUI.show(parent);
+            };
 
-                successLabel.setText("Registered Successfully");
-
-                Timer timer = new Timer(2000, evt -> {
-                    ((Timer) evt.getSource()).stop();
-                    SwingUtilities.invokeLater(() -> LoginRegisterUI.show(parent));
-                });
-                timer.setRepeats(false);
-                timer.start();
-
-            } catch (SQLException ex) {
-                successLabel.setText("Registration failed: " + ex.getMessage());
-            }
+            // Show terms and conditions
+            TermsCondViewer.showTerms(parent, onAccept, onDecline);
         });
 
         gbc.gridy = 14;
@@ -288,6 +296,7 @@ public class RegisterPageUI {
 
         contentPanel.add(card);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
+
         parent.getContentPane().removeAll();
         parent.getContentPane().add(mainPanel);
         parent.revalidate();

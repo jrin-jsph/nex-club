@@ -3,7 +3,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 public class LoginRegisterUI {
 
@@ -145,7 +144,6 @@ public class LoginRegisterUI {
                         ResultSet rs = stmt.executeQuery();
 
                         if (rs.next()) {
-                            // ✔️ Insert or update login table
                             PreparedStatement checkLogin = conn.prepareStatement(
                                 "SELECT login_count FROM login WHERE nID = ?");
                             checkLogin.setString(1, id);
@@ -205,6 +203,21 @@ public class LoginRegisterUI {
 
         gbc.gridy = 9;
         card.add(regPanel, gbc);
+
+        // 👉 Added Forgot Password label
+        JLabel forgotPassword = new JLabel("Forgot Password?");
+        forgotPassword.setFont(new Font("Microsoft JhengHei", Font.PLAIN, 12));
+        forgotPassword.setForeground(new Color(153, 153, 153)); // light grey
+        forgotPassword.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        forgotPassword.setHorizontalAlignment(SwingConstants.CENTER);
+        forgotPassword.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                ResetPasswordUI.show(parent);
+            }
+        });
+
+        gbc.gridy = 10;
+        card.add(forgotPassword, gbc);
 
         centerPanel.add(card);
         mainPanel.add(centerPanel, BorderLayout.CENTER);

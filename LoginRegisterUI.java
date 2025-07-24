@@ -43,39 +43,97 @@ public class LoginRegisterUI {
         gbc.anchor = GridBagConstraints.WEST;
         card.add(heading, gbc);
 
+        // Role selection radio buttons
+        JLabel roleLabel = new JLabel("<html>Are you? <font color='red'>*</font></html>");
+        roleLabel.setFont(new Font("Microsoft JhengHei", Font.BOLD, 13));
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        card.add(roleLabel, gbc);
+
+        JRadioButton studentBtn = new JRadioButton("Student");
+        JRadioButton orgBtn = new JRadioButton("Institution");
+        ButtonGroup roleGroup = new ButtonGroup();
+        roleGroup.add(studentBtn);
+        roleGroup.add(orgBtn);
+        studentBtn.setSelected(true);
+
+        JPanel rolePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        rolePanel.setBackground(Color.WHITE);
+        rolePanel.add(studentBtn);
+        rolePanel.add(orgBtn);
+        gbc.gridy = 2;
+        card.add(rolePanel, gbc);
+
         JLabel userLabel = new JLabel("<html>Nex ID <font color='red'>*</font></html>");
         userLabel.setFont(new Font("Microsoft JhengHei", Font.BOLD, 13));
         userLabel.setForeground(Color.BLACK);
-        gbc.gridy = 1;
+        gbc.gridy = 3;
         card.add(userLabel, gbc);
+
+        // Create prefix panel with perfect vertical alignment
+        JPanel prefixPanel = new JPanel(new BorderLayout());
+        prefixPanel.setBackground(Color.WHITE);
+
+        // Unified panel for NX + S/I with fixed padding for alignment
+        JPanel prefixTextPanel = new JPanel();
+        prefixTextPanel.setLayout(new BoxLayout(prefixTextPanel, BoxLayout.X_AXIS));
+        prefixTextPanel.setBackground(Color.WHITE);
+        prefixTextPanel.setBorder(BorderFactory.createEmptyBorder(14, 10, 14, 8)); // Match padding with text field
+
+        JLabel nxPrefixLabel = new JLabel("NX");
+        nxPrefixLabel.setFont(new Font("Microsoft JhengHei", Font.PLAIN, 14));
+        nxPrefixLabel.setAlignmentY(Component.CENTER_ALIGNMENT);
+
+        JLabel rolePrefixLabel = new JLabel("S");
+        rolePrefixLabel.setFont(new Font("Microsoft JhengHei", Font.PLAIN, 14));
+        rolePrefixLabel.setAlignmentY(Component.CENTER_ALIGNMENT);
+
+        prefixTextPanel.add(nxPrefixLabel);
+        prefixTextPanel.add(rolePrefixLabel);
+
+        prefixPanel.add(prefixTextPanel, BorderLayout.WEST);
 
         JTextField userField = new JTextField();
         userField.setFont(new Font("Microsoft JhengHei", Font.PLAIN, 14));
-        userField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
-            BorderFactory.createEmptyBorder(14, 8, 14, 8)));
+        userField.setBorder(BorderFactory.createEmptyBorder(14, 8, 14, 8));
         userField.addKeyListener(new KeyAdapter() {
             public void keyReleased(KeyEvent evt) {
                 userField.setText(userField.getText().toUpperCase());
             }
         });
 
-        JPanel userPanel = new JPanel(new BorderLayout());
-        userPanel.setBackground(Color.WHITE);
-        userPanel.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220), 1));
-        userPanel.add(new JLabel("NX "), BorderLayout.WEST);
-        userPanel.add(userField, BorderLayout.CENTER);
-        gbc.gridy = 2;
-        card.add(userPanel, gbc);
+        // Main panel for ID field with perfect alignment
+        JPanel idPanel = new JPanel(new BorderLayout());
+        idPanel.setBackground(Color.WHITE);
+        idPanel.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220), 1));
+
+        idPanel.add(prefixPanel, BorderLayout.WEST);
+        idPanel.add(userField, BorderLayout.CENTER);
+
+        gbc.gridy = 4;
+        card.add(idPanel, gbc);
+
+        // Update role prefix when radio buttons are clicked
+        studentBtn.addActionListener(e -> {
+            rolePrefixLabel.setText("S");
+            idPanel.revalidate();
+            idPanel.repaint();
+        });
+
+        orgBtn.addActionListener(e -> {
+            rolePrefixLabel.setText("I");
+            idPanel.revalidate();
+            idPanel.repaint();
+        });
 
         JLabel userWarning = new JLabel(" ");
         userWarning.setForeground(Color.RED);
-        gbc.gridy = 3;
+        gbc.gridy = 5;
         card.add(userWarning, gbc);
 
         JLabel passLabel = new JLabel("<html>Password <font color='red'>*</font></html>");
         passLabel.setFont(new Font("Microsoft JhengHei", Font.BOLD, 13));
-        gbc.gridy = 4;
+        gbc.gridy = 6;
         card.add(passLabel, gbc);
 
         JPasswordField passField = new JPasswordField();
@@ -88,6 +146,7 @@ public class LoginRegisterUI {
         toggleIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         toggleIcon.addMouseListener(new MouseAdapter() {
             private boolean showing = false;
+
             public void mouseClicked(MouseEvent e) {
                 showing = !showing;
                 passField.setEchoChar(showing ? (char) 0 : '•');
@@ -99,17 +158,17 @@ public class LoginRegisterUI {
         passPanel.setBackground(Color.WHITE);
         passPanel.add(passField, BorderLayout.CENTER);
         passPanel.add(toggleIcon, BorderLayout.EAST);
-        gbc.gridy = 5;
+        gbc.gridy = 7;
         card.add(passPanel, gbc);
 
         JLabel passWarning = new JLabel(" ");
         passWarning.setForeground(Color.RED);
-        gbc.gridy = 6;
+        gbc.gridy = 8;
         card.add(passWarning, gbc);
 
         JLabel loginStatus = new JLabel(" ");
         loginStatus.setForeground(new Color(0, 153, 0));
-        gbc.gridy = 7;
+        gbc.gridy = 9;
         card.add(loginStatus, gbc);
 
         JLabel loginBtn = new JLabel("Login", SwingConstants.CENTER);
@@ -118,7 +177,7 @@ public class LoginRegisterUI {
         loginBtn.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 boolean hasError = false;
-                String id = "NX" + userField.getText().trim();
+                String id = "NX" + rolePrefixLabel.getText() + userField.getText().trim();
                 String password = new String(passField.getPassword());
 
                 userWarning.setText(" ");
@@ -182,7 +241,7 @@ public class LoginRegisterUI {
             }
         });
 
-        gbc.gridy = 8;
+        gbc.gridy = 10;
         card.add(loginBtn, gbc);
 
         JLabel registerLabel = new JLabel("Don't have an account?");
@@ -201,13 +260,12 @@ public class LoginRegisterUI {
         regPanel.add(registerLabel);
         regPanel.add(registerLink);
 
-        gbc.gridy = 9;
+        gbc.gridy = 11;
         card.add(regPanel, gbc);
 
-        // 👉 Added Forgot Password label
         JLabel forgotPassword = new JLabel("Forgot Password?");
         forgotPassword.setFont(new Font("Microsoft JhengHei", Font.PLAIN, 12));
-        forgotPassword.setForeground(new Color(153, 153, 153)); // light grey
+        forgotPassword.setForeground(new Color(153, 153, 153));
         forgotPassword.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         forgotPassword.setHorizontalAlignment(SwingConstants.CENTER);
         forgotPassword.addMouseListener(new MouseAdapter() {
@@ -216,7 +274,7 @@ public class LoginRegisterUI {
             }
         });
 
-        gbc.gridy = 10;
+        gbc.gridy = 12;
         card.add(forgotPassword, gbc);
 
         centerPanel.add(card);

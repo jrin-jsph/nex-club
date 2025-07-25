@@ -462,7 +462,6 @@ public class ResetPasswordUI {
             message.setSubject("Your NexClub Password Reset OTP");
             message.setText("Dear NexClub User,\n\n" +
                           "Your One-Time Password (OTP) for password reset is: " + otp + "\n\n" +
-                          "This OTP is valid for 5 minutes. Please do not share it with anyone.\n\n" +
                           "If you didn't request this, please ignore this email.\n\n" +
                           "Regards,\n" +
                           "NexClub Team");

@@ -1,5 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
+import java.sql.*;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -57,11 +58,50 @@ public class NexClubWelcomePanel {
         nextButton.setPreferredSize(new Dimension(110, 44));
         nextButton.setFocusPainted(false);
 
-        // ✅ Updated to show student profile page
         nextButton.addActionListener(e -> {
-         ProfileUpdaterApp.show(parent); // <-- Launch ProfileUpdaterApp
-        });
+            nextButton.setEnabled(false); // prevent multiple clicks
 
+            new javax.swing.Timer(1000, evt -> {
+                ((javax.swing.Timer) evt.getSource()).stop(); // stop the timer
+
+                try {
+                    // DB connection
+                    Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/nexclub", "root", "admin");
+
+                    // Query most recent nID based on timestamp
+                    String query = "SELECT nID FROM login ORDER BY login_time DESC LIMIT 1";
+                    Statement stmt = conn.createStatement();
+                    ResultSet rs = stmt.executeQuery(query);
+
+                    if (rs.next()) {
+                        String nID = rs.getString("nID");
+                        if (nID.length() >= 3) {
+                            char type = nID.charAt(2); // 3rd character (index 2)
+
+                            if (type == 'S') {
+                                ProfileUpdaterApp.show(parent);
+                            } else if (type == 'I') {
+                                InstitutionProfileUpdater.show(parent);
+                            } else {
+                                JOptionPane.showMessageDialog(parent, "Unknown nID type: " + type, "Error", JOptionPane.ERROR_MESSAGE);
+                            }
+                        } else {
+                            JOptionPane.showMessageDialog(parent, "Invalid nID format.", "Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(parent, "No login records found.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+
+                    rs.close();
+                    stmt.close();
+                    conn.close();
+
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(parent, "Database error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }).start();
+        });
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setBackground(Color.WHITE);
@@ -89,7 +129,7 @@ public class NexClubWelcomePanel {
                     }
                 } else {
                     if (contentAlpha < 1f) {
-                        contentAlpha = Math.min(1f, contentAlpha + 0.05f); // Ensure alpha doesn't exceed 1.0
+                        contentAlpha = Math.min(1f, contentAlpha + 0.05f);
                         contentLabel.repaint();
                     } else {
                         cancel();

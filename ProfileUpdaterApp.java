@@ -119,7 +119,7 @@ abstract class AbstractFormPanel extends JPanel {
 
     protected JLabel createValidationLabel() {
         JLabel label = new JLabel("");
-        label.setFont(new Font("Microsoft JhengHei", Font.BOLD, 12));
+        label.setFont(new Font("Microsoft JhengHei", Font.BOLD, 11));
         label.setAlignmentX(Component.CENTER_ALIGNMENT);
         label.setHorizontalAlignment(SwingConstants.CENTER);
         return label;

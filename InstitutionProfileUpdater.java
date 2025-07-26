@@ -62,7 +62,7 @@ abstract class BaseDetailsPanel extends JPanel {
     protected final Font labelFont = new Font("Microsoft JhengHei", Font.PLAIN, 15);
     protected final Font sectionFont = new Font("Microsoft JhengHei", Font.BOLD, 21);
     protected final Font fieldFont = new Font("Microsoft JhengHei", Font.PLAIN, 15);
-    protected final Dimension newDimensions = new Dimension(300, 45);
+    protected final Dimension newDimensions = new Dimension(400, 45);
 
     protected JPanel createLabeledField(String labelText, JComponent field) {
         JPanel panel = new JPanel(new BorderLayout(10, 4));
@@ -143,9 +143,9 @@ class InstitutionDetailsPanel extends BaseDetailsPanel {
         greetingPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 10, 0));
 
         JLabel greeting = new JLabel("Hello,You!");
-        greeting.setFont(new Font("Microsoft JhengHei", Font.BOLD, 35));
-        JLabel instruction = new JLabel("Let's update the profile");
-        instruction.setFont(new Font("Microsoft JhengHei", Font.PLAIN, 15));
+        greeting.setFont(new Font("Microsoft JhengHei", Font.BOLD, 40));
+        JLabel instruction = new JLabel("Let's update the institution profile");
+        instruction.setFont(new Font("Microsoft JhengHei", Font.PLAIN, 18));
 
         greetingPanel.add(greeting);
         greetingPanel.add(Box.createRigidArea(new Dimension(0, 4)));
@@ -223,6 +223,20 @@ class AdminDetailsPanel extends BaseDetailsPanel {
         admin.setText("");
         desig.setSelectedIndex(0);
         dept.setSelectedIndex(0);
+        
+         JPanel greetingPanel = new JPanel();
+        greetingPanel.setLayout(new BoxLayout(greetingPanel, BoxLayout.Y_AXIS));
+        greetingPanel.setBackground(Color.WHITE);
+        greetingPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 10, 0));
+
+        JLabel greeting = new JLabel("Hello,You!");
+        greeting.setFont(new Font("Microsoft JhengHei", Font.BOLD, 40));
+        JLabel instruction = new JLabel("Let's update the institution profile");
+        instruction.setFont(new Font("Microsoft JhengHei", Font.PLAIN, 18));
+
+        greetingPanel.add(greeting);
+        greetingPanel.add(Box.createRigidArea(new Dimension(0, 4)));
+        greetingPanel.add(instruction);
 
         Box box = Box.createVerticalBox();
         JLabel title = new JLabel("Admin Details");
@@ -273,7 +287,7 @@ class AdminDetailsPanel extends BaseDetailsPanel {
                     "nID VARCHAR(30) NOT NULL," +
                     "collegeName VARCHAR(100) NOT NULL," +
                     "institutionType VARCHAR(50) NOT NULL," +
-                    "contactNumber INT(10) NOT NULL," +
+                    "contactNumber VARCHAR(15) NOT NULL," +
                     "adminName VARCHAR(100) NOT NULL," +
                     "designation VARCHAR(50) NOT NULL," +
                     "department VARCHAR(50) NOT NULL," +    
@@ -296,6 +310,11 @@ class AdminDetailsPanel extends BaseDetailsPanel {
                     return;
                 }
 
+                
+                PreparedStatement updateStudentStmt = conn.prepareStatement("UPDATE institution s JOIN login l ON s.nID IS NULL SET s.nID = ? WHERE l.login_time = (SELECT MAX(login_time) FROM login)");
+                updateStudentStmt.setString(1, latestNID);
+                updateStudentStmt.executeUpdate();               
+                
                 PreparedStatement insertStmt = conn.prepareStatement("INSERT INTO institution(collegeName, institutionType, contactNumber, adminName, designation, department, nID) VALUES (?, ?, ?, ?, ?, ?, ?)");
                 insertStmt.setString(1, InstitutionFrame.institutionDetails[0]);
                 insertStmt.setString(2, InstitutionFrame.institutionDetails[1]);
@@ -305,11 +324,7 @@ class AdminDetailsPanel extends BaseDetailsPanel {
                 insertStmt.setString(6, (String) dept.getSelectedItem());
                 insertStmt.setString(7, latestNID);
                 insertStmt.executeUpdate();
-
-                PreparedStatement updateStudentStmt = conn.prepareStatement("UPDATE Student s JOIN login l ON s.nID IS NULL SET s.nID = ? WHERE l.login_time = (SELECT MAX(login_time) FROM login)");
-                updateStudentStmt.setString(1, latestNID);
-                updateStudentStmt.executeUpdate();
-
+                
                 validationLabel.setText("Profile saved successfully!");
                 validationLabel.setForeground(new Color(0, 153, 0));
 
@@ -340,5 +355,7 @@ class AdminDetailsPanel extends BaseDetailsPanel {
         add(Box.createVerticalStrut(30), BorderLayout.NORTH);
         add(center, BorderLayout.CENTER);
         add(south, BorderLayout.SOUTH);
+        add(greetingPanel, BorderLayout.NORTH);
+        
     }
 }

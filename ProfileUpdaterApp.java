@@ -32,7 +32,7 @@ public class ProfileUpdaterApp {
             String createTableSQL = "CREATE TABLE IF NOT EXISTS student (" +
                 "nID VARCHAR(30), " +
                 "fullName VARCHAR(100) NOT NULL, " +
-                "phone VARCHAR(10) NOT NULL, " +
+                "phone VARCHAR(15) NOT NULL, " +
                 "dob DATE, " +
                 "gender VARCHAR(10) NOT NULL, " +
                 "college VARCHAR(100) NOT NULL, " +
@@ -97,9 +97,9 @@ abstract class AbstractFormPanel extends JPanel {
         label.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         field.setAlignmentX(Component.LEFT_ALIGNMENT);
-        field.setMaximumSize(new Dimension(300, 45));
-        field.setPreferredSize(new Dimension(300, 45));
-        field.setMinimumSize(new Dimension(300, 45));
+        field.setMaximumSize(new Dimension(400, 45));
+        field.setPreferredSize(new Dimension(400, 45));
+        field.setMinimumSize(new Dimension(400, 45));
 
         panel.add(label);
         panel.add(Box.createRigidArea(new Dimension(0, 4)));
@@ -116,9 +116,9 @@ abstract class AbstractFormPanel extends JPanel {
     protected void styleField(JTextField field) {
         field.setHorizontalAlignment(JTextField.LEFT);
         field.setFont(fieldFont);
-        field.setMaximumSize(new Dimension(300, 45));
-        field.setPreferredSize(new Dimension(300, 45));
-        field.setMinimumSize(new Dimension(300, 45));
+        field.setMaximumSize(new Dimension(400, 45));
+        field.setPreferredSize(new Dimension(400, 45));
+        field.setMinimumSize(new Dimension(400, 45));
         field.setAlignmentX(Component.LEFT_ALIGNMENT);
     }
 
@@ -154,7 +154,6 @@ abstract class AbstractFormPanel extends JPanel {
 }
 
 class BasicDetailsPanel extends AbstractFormPanel {
-    private Font greetingFont = new Font("Microsoft JhengHei", Font.BOLD, 35);
 
     public BasicDetailsPanel(MainFrame frame) {
         setLayout(new BorderLayout());
@@ -167,10 +166,9 @@ class BasicDetailsPanel extends AbstractFormPanel {
         greetingPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 10, 0));
 
         JLabel greeting = new JLabel("Hello, You!");
-        greeting.setFont(greetingFont);
-        greeting.setFont(new Font("Microsoft JhengHei", Font.BOLD, 35));
-        JLabel instruction = new JLabel("Let's update the profile");
-        instruction.setFont(new Font("Microsoft JhengHei", Font.PLAIN, 15));
+        greeting.setFont(new Font("Microsoft JhengHei", Font.BOLD, 40));
+        JLabel instruction = new JLabel("Let's update the student profile");
+        instruction.setFont(new Font("Microsoft JhengHei", Font.PLAIN, 18));
 
         greetingPanel.add(greeting);
         greetingPanel.add(Box.createRigidArea(new Dimension(0, 4)));
@@ -189,7 +187,7 @@ class BasicDetailsPanel extends AbstractFormPanel {
         JTextField phoneField = createTextField();
         JTextField dobField = createTextField();
         JComboBox<String> genderComboBox = createComboBox(
-            new String[] {"-- Select Gender --", "Male", "Female", "Other"}, 300, 45);
+            new String[] {"-- Select Gender --", "Male", "Female", "Other"}, 400, 45);
 
         // Add document listener for phone number validation
         phoneField.getDocument().addDocumentListener(new DocumentListener() {
@@ -263,7 +261,7 @@ class BasicDetailsPanel extends AbstractFormPanel {
         contentBox.add(Box.createRigidArea(spacing));
         contentBox.add(createLabeledField("Full Name", fullNameField));
         contentBox.add(Box.createRigidArea(spacing));
-        contentBox.add(createLabeledField("Phone Number (10 digits)", phoneField));
+        contentBox.add(createLabeledField("Phone Number", phoneField));
         contentBox.add(Box.createRigidArea(spacing));
         contentBox.add(createLabeledField("Date of Birth (YYYY-MM-DD)", dobField));
         contentBox.add(Box.createRigidArea(spacing));
@@ -293,6 +291,20 @@ class AcademicInfoPanel extends AbstractFormPanel {
         centerPanel.setBackground(Color.WHITE);
         Box contentBox = Box.createVerticalBox();
 
+        JPanel greetingPanel = new JPanel();
+        greetingPanel.setLayout(new BoxLayout(greetingPanel, BoxLayout.Y_AXIS));
+        greetingPanel.setBackground(Color.WHITE);
+        greetingPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 10, 0));
+
+        JLabel greeting = new JLabel("Hello, You!");
+        greeting.setFont(new Font("Microsoft JhengHei", Font.BOLD, 40));
+        JLabel instruction = new JLabel("Let's update the student profile");
+        instruction.setFont(new Font("Microsoft JhengHei", Font.PLAIN, 18));
+
+        greetingPanel.add(greeting);
+        greetingPanel.add(Box.createRigidArea(new Dimension(0, 4)));
+        greetingPanel.add(instruction);
+        
         JLabel sectionTitle = new JLabel("Academic Details");
         sectionTitle.setFont(sectionFont);
         sectionTitle.setBorder(BorderFactory.createEmptyBorder(20, 0, 12, 0));
@@ -323,10 +335,10 @@ class AcademicInfoPanel extends AbstractFormPanel {
 
         // Degree and Branch ComboBoxes with default selections
         JComboBox<String> degreeComboBox = createComboBox(
-            new String[] {"-- Select Degree --", "B.Tech", "M.Tech", "MBA", "BBA", "B.Sc", "M.Sc", "PhD"}, 300, 45);
+            new String[] {"-- Select Degree --", "B.Tech", "M.Tech", "MBA", "BBA", "B.Sc", "M.Sc", "PhD"}, 400, 45);
 
         JComboBox<String> branchComboBox = createComboBox(
-            new String[] {"-- Select Branch --", "Computer Science", "Mechanical Engineering", "Civil Engineering", "Electrical Engineering", "Electronics", "Chemical"}, 300, 45);
+            new String[] {"-- Select Branch --", "Computer Science", "Mechanical Engineering", "Civil Engineering", "Electrical Engineering", "Electronics", "Chemical"}, 400, 45);
 
         JTextField yearOfStudyField = createTextField();
 
@@ -464,7 +476,8 @@ class AcademicInfoPanel extends AbstractFormPanel {
         buttonPanel.setBackground(Color.WHITE);
         buttonPanel.add(backButton);
         buttonPanel.add(submitButton);
-
+         
+        add(greetingPanel, BorderLayout.NORTH);
         add(centerPanel, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
     }

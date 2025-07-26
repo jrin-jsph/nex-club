@@ -107,12 +107,12 @@ public class WelcomeUI {
         welcomeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         profileLabel = new JLabel();
-        profileLabel.setFont(new Font("Microsoft JhengHei", Font.PLAIN, 25));
+        profileLabel.setFont(new Font("Microsoft JhengHei", Font.PLAIN, 20));
         profileLabel.setForeground(new Color(80, 80, 80));
         profileLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         continueButton = new JButton("Continue");
-        continueButton.setFont(new Font("Microsoft JhengHei", Font.PLAIN, 18));
+        continueButton.setFont(new Font("Microsoft JhengHei", Font.BOLD, 18));
         continueButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         continueButton.setVisible(false);
         continueButton.setFocusPainted(false);

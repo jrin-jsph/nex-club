@@ -1,4 +1,5 @@
 import com.formdev.flatlaf.FlatLightLaf;
+
 import javax.swing.*;
 import java.awt.*;
 import java.sql.*;
@@ -79,18 +80,6 @@ abstract class BaseDetailsPanel extends JPanel {
         return panel;
     }
 
-    protected JTextField createTextField() {
-        JTextField field = new JTextField();
-        field.setPreferredSize(newDimensions);
-        return field;
-    }
-
-    protected JComboBox<String> createComboBox(String[] items) {
-        JComboBox<String> combo = new JComboBox<>(items);
-        combo.setPreferredSize(newDimensions);
-        return combo;
-    }
-
     protected JComboBox<String> createCollegeComboBox() {
         JComboBox<String> combo = new JComboBox<>();
         combo.setPreferredSize(newDimensions);
@@ -105,6 +94,18 @@ abstract class BaseDetailsPanel extends JPanel {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        return combo;
+    }
+
+    protected JTextField createTextField() {
+        JTextField field = new JTextField();
+        field.setPreferredSize(newDimensions);
+        return field;
+    }
+
+    protected JComboBox<String> createComboBox(String[] items) {
+        JComboBox<String> combo = new JComboBox<>(items);
+        combo.setPreferredSize(newDimensions);
         return combo;
     }
 
@@ -124,9 +125,7 @@ class InstitutionDetailsPanel extends BaseDetailsPanel {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
-        JTextField collegeNameField = createTextField();
-        JPopupMenu suggestionPopup = new JPopupMenu();
-
+        JComboBox<String> collegeDropdown = createCollegeComboBox();
         JComboBox<String> type = createComboBox(new String[]{"Select Institution Type", "Public University", "Private College", "Institute", "School"});
         JTextField contact = createTextField();
         JLabel validationLabel = new JLabel(" ");
@@ -134,7 +133,9 @@ class InstitutionDetailsPanel extends BaseDetailsPanel {
         validationLabel.setForeground(Color.RED);
         validationLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        load(collegeNameField, type, contact);
+        collegeDropdown.setSelectedIndex(0);
+        type.setSelectedIndex(0);
+        contact.setText("");
 
         JPanel greetingPanel = new JPanel();
         greetingPanel.setLayout(new BoxLayout(greetingPanel, BoxLayout.Y_AXIS));
@@ -157,7 +158,7 @@ class InstitutionDetailsPanel extends BaseDetailsPanel {
 
         box.add(title);
         box.add(Box.createRigidArea(new Dimension(0, 16)));
-        box.add(createLabeledField("College/University Name", collegeNameField));
+        box.add(createLabeledField("College/University Name", collegeDropdown));
         box.add(Box.createRigidArea(new Dimension(0, 16)));
         box.add(createLabeledField("Institution Type", type));
         box.add(Box.createRigidArea(new Dimension(0, 16)));
@@ -171,10 +172,10 @@ class InstitutionDetailsPanel extends BaseDetailsPanel {
 
         JButton next = createFlatButton("Next");
         next.addActionListener(e -> {
-            String collegeName = collegeNameField.getText().trim();
+            String selectedCollege = collegeDropdown.getSelectedItem().toString();
             String contactNum = contact.getText().trim();
 
-            if (collegeName.isEmpty() ||
+            if (selectedCollege.equals("Select College") ||
                 type.getSelectedItem().toString().equals("Select Institution Type") ||
                 contactNum.isEmpty()) {
                 validationLabel.setText("Please fill all institution details.");
@@ -189,7 +190,7 @@ class InstitutionDetailsPanel extends BaseDetailsPanel {
             }
 
             validationLabel.setText(" ");
-            InstitutionFrame.institutionDetails[0] = collegeName;
+            InstitutionFrame.institutionDetails[0] = selectedCollege;
             InstitutionFrame.institutionDetails[1] = (String) type.getSelectedItem();
             InstitutionFrame.institutionDetails[2] = contactNum;
             frame.showCard("AdminDetails");
@@ -203,67 +204,8 @@ class InstitutionDetailsPanel extends BaseDetailsPanel {
         add(greetingPanel, BorderLayout.NORTH);
         add(center, BorderLayout.CENTER);
         add(south, BorderLayout.SOUTH);
-
-        // Live search logic
-        collegeNameField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            private void searchColleges(String input) {
-                SwingUtilities.invokeLater(() -> {
-                    suggestionPopup.setVisible(false);
-                    suggestionPopup.removeAll();
-
-                    if (input.isEmpty()) return;
-
-                    try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/nexclub", "root", "admin")) {
-                        PreparedStatement stmt = conn.prepareStatement(
-                            "SELECT name FROM Colleges WHERE LOWER(name) LIKE ?");
-                        stmt.setString(1, "%" + input.toLowerCase() + "%");
-
-                        ResultSet rs = stmt.executeQuery();
-                        while (rs.next()) {
-                            String college = rs.getString("name");
-                            JMenuItem item = new JMenuItem(college);
-                            item.setFont(fieldFont);
-                            item.setBackground(Color.WHITE);
-                            item.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-                            item.addActionListener(ev -> {
-                                collegeNameField.setText(college);
-                                suggestionPopup.setVisible(false);
-                            });
-                            suggestionPopup.add(item);
-                        }
-
-                        if (suggestionPopup.getComponentCount() > 0) {
-                            suggestionPopup.show(collegeNameField, 0, collegeNameField.getHeight());
-                            suggestionPopup.setFocusable(false);
-                        }
-
-                    } catch (SQLException ex) {
-                        ex.printStackTrace();
-                    }
-                });
-            }
-
-            public void insertUpdate(javax.swing.event.DocumentEvent e) {
-                searchColleges(collegeNameField.getText().trim());
-            }
-
-            public void removeUpdate(javax.swing.event.DocumentEvent e) {
-                searchColleges(collegeNameField.getText().trim());
-            }
-
-            public void changedUpdate(javax.swing.event.DocumentEvent e) {
-                searchColleges(collegeNameField.getText().trim());
-            }
-        });
-    }
-
-    private void load(JTextField nameField, JComboBox<String> type, JTextField contact) {
-        nameField.setText("");
-        type.setSelectedIndex(0);
-        contact.setText("");
     }
 }
-
 
 class AdminDetailsPanel extends BaseDetailsPanel {
     public AdminDetailsPanel(InstitutionFrame frame) {
@@ -278,7 +220,9 @@ class AdminDetailsPanel extends BaseDetailsPanel {
         validationLabel.setForeground(Color.RED);
         validationLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        load(admin, desig, dept);
+        admin.setText("");
+        desig.setSelectedIndex(0);
+        dept.setSelectedIndex(0);
 
         Box box = Box.createVerticalBox();
         JLabel title = new JLabel("Admin Details");
@@ -324,22 +268,46 @@ class AdminDetailsPanel extends BaseDetailsPanel {
             InstitutionFrame.adminDetails[2] = (String) dept.getSelectedItem();
 
             try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/nexclub", "root", "admin")) {
-                PreparedStatement stmt = conn.prepareStatement("INSERT INTO Institution(collegeName, institutionType, contactNumber, adminName, designation, department) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE institutionType=?, contactNumber=?, adminName=?, designation=?, department=?");
-                stmt.setString(1, InstitutionFrame.institutionDetails[0]);
-                stmt.setString(2, InstitutionFrame.institutionDetails[1]);
-                stmt.setString(3, InstitutionFrame.institutionDetails[2]);
-                stmt.setString(4, adminName);
-                stmt.setString(5, (String) desig.getSelectedItem());
-                stmt.setString(6, (String) dept.getSelectedItem());
-                stmt.setString(7, InstitutionFrame.institutionDetails[1]);
-                stmt.setString(8, InstitutionFrame.institutionDetails[2]);
-                stmt.setString(9, adminName);
-                stmt.setString(10, (String) desig.getSelectedItem());
-                stmt.setString(11, (String) dept.getSelectedItem());
-                stmt.executeUpdate();
+                Statement createTableStmt = conn.createStatement();
+                createTableStmt.executeUpdate("CREATE TABLE IF NOT EXISTS institution (" +
+                    "nID VARCHAR(30) NOT NULL," +
+                    "collegeName VARCHAR(100) NOT NULL," +
+                    "institutionType VARCHAR(50) NOT NULL," +
+                    "contactNumber INT(10) NOT NULL," +
+                    "adminName VARCHAR(100) NOT NULL," +
+                    "designation VARCHAR(50) NOT NULL," +
+                    "department VARCHAR(50) NOT NULL," +    
+                    "PRIMARY KEY (nID)," +
+                    "UNIQUE KEY (nID))");
 
-                PreparedStatement updateStudentStmt = conn.prepareStatement(
-                    "UPDATE Student s JOIN login l ON s.nID IS NULL SET s.nID = l.nID WHERE l.login_time = (SELECT MAX(login_time) FROM login)");
+                PreparedStatement nidStmt = conn.prepareStatement("SELECT nID FROM login ORDER BY login_time DESC LIMIT 1");
+                ResultSet rs = nidStmt.executeQuery();
+                String latestNID = null;
+                if (rs.next()) {
+                    latestNID = rs.getString("nID");
+                }
+
+                PreparedStatement checkStmt = conn.prepareStatement("SELECT COUNT(*) FROM institution WHERE nID = ?");
+                checkStmt.setString(1, latestNID);
+                ResultSet checkRs = checkStmt.executeQuery();
+                if (checkRs.next() && checkRs.getInt(1) > 0) {
+                    validationLabel.setText("Institution profile already exists for this account.");
+                    validationLabel.setForeground(Color.RED);
+                    return;
+                }
+
+                PreparedStatement insertStmt = conn.prepareStatement("INSERT INTO institution(collegeName, institutionType, contactNumber, adminName, designation, department, nID) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                insertStmt.setString(1, InstitutionFrame.institutionDetails[0]);
+                insertStmt.setString(2, InstitutionFrame.institutionDetails[1]);
+                insertStmt.setString(3, InstitutionFrame.institutionDetails[2]);
+                insertStmt.setString(4, adminName);
+                insertStmt.setString(5, (String) desig.getSelectedItem());
+                insertStmt.setString(6, (String) dept.getSelectedItem());
+                insertStmt.setString(7, latestNID);
+                insertStmt.executeUpdate();
+
+                PreparedStatement updateStudentStmt = conn.prepareStatement("UPDATE Student s JOIN login l ON s.nID IS NULL SET s.nID = ? WHERE l.login_time = (SELECT MAX(login_time) FROM login)");
+                updateStudentStmt.setString(1, latestNID);
                 updateStudentStmt.executeUpdate();
 
                 validationLabel.setText("Profile saved successfully!");
@@ -372,11 +340,5 @@ class AdminDetailsPanel extends BaseDetailsPanel {
         add(Box.createVerticalStrut(30), BorderLayout.NORTH);
         add(center, BorderLayout.CENTER);
         add(south, BorderLayout.SOUTH);
-    }
-
-    private void load(JTextField admin, JComboBox<String> desig, JComboBox<String> dept) {
-        admin.setText("");
-        desig.setSelectedIndex(0);
-        dept.setSelectedIndex(0);
     }
 }

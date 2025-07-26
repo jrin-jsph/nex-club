@@ -16,12 +16,38 @@ public class ProfileUpdaterApp {
             System.err.println("Failed to initialize FlatLaf");
         }
 
+        // Create student table if not exists
+        createStudentTableIfNotExists();
+
         SwingUtilities.invokeLater(() -> {
             MainFrame mainFrame = new MainFrame();
             parent.setContentPane(mainFrame.getContentPane());
             parent.revalidate();
             parent.repaint();
         });
+    }
+
+    private static void createStudentTableIfNotExists() {
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/nexclub", "root", "admin")) {
+            String createTableSQL = "CREATE TABLE IF NOT EXISTS student (" +
+                "nID VARCHAR(30), " +
+                "fullName VARCHAR(100) NOT NULL, " +
+                "phone VARCHAR(10) NOT NULL, " +
+                "dob DATE, " +
+                "gender VARCHAR(10) NOT NULL, " +
+                "college VARCHAR(100) NOT NULL, " +
+                "university VARCHAR(100) NOT NULL, " +
+                "degree VARCHAR(100) NOT NULL, " +
+                "branch VARCHAR(100) NOT NULL, " +
+                "yearOfStudy VARCHAR(15) NOT NULL, " +
+                "PRIMARY KEY (nID), " +
+                "UNIQUE KEY (nID)" +
+                ")";
+            Statement stmt = conn.createStatement();
+            stmt.execute(createTableSQL);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
 
@@ -165,6 +191,31 @@ class BasicDetailsPanel extends AbstractFormPanel {
         JComboBox<String> genderComboBox = createComboBox(
             new String[] {"-- Select Gender --", "Male", "Female", "Other"}, 300, 45);
 
+        // Add document listener for phone number validation
+        phoneField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                validatePhone();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                validatePhone();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                validatePhone();
+            }
+
+            private void validatePhone() {
+                String phone = phoneField.getText().trim();
+                if (!phone.matches("\\d{0,10}")) {
+                    phoneField.setText(phone.replaceAll("[^\\d]", ""));
+                }
+            }
+        });
+
         JLabel validationLabel = createValidationLabel();
         validationLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         validationLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -176,8 +227,23 @@ class BasicDetailsPanel extends AbstractFormPanel {
             String dob = dobField.getText().trim();
             String gender = (String) genderComboBox.getSelectedItem();
 
+            // Validate all fields
             if (fullName.isEmpty() || phone.isEmpty() || dob.isEmpty() || gender.equals("-- Select Gender --")) {
                 validationLabel.setText("Please complete all fields.");
+                validationLabel.setForeground(Color.RED);
+                return;
+            }
+
+            // Validate phone number (exactly 10 digits)
+            if (!phone.matches("\\d{10}")) {
+                validationLabel.setText("Phone number must be 10 digits.");
+                validationLabel.setForeground(Color.RED);
+                return;
+            }
+
+            // Validate date format (YYYY-MM-DD)
+            if (!dob.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                validationLabel.setText("Please enter date in YYYY-MM-DD format.");
                 validationLabel.setForeground(Color.RED);
                 return;
             }
@@ -197,7 +263,7 @@ class BasicDetailsPanel extends AbstractFormPanel {
         contentBox.add(Box.createRigidArea(spacing));
         contentBox.add(createLabeledField("Full Name", fullNameField));
         contentBox.add(Box.createRigidArea(spacing));
-        contentBox.add(createLabeledField("Phone Number", phoneField));
+        contentBox.add(createLabeledField("Phone Number (10 digits)", phoneField));
         contentBox.add(Box.createRigidArea(spacing));
         contentBox.add(createLabeledField("Date of Birth (YYYY-MM-DD)", dobField));
         contentBox.add(Box.createRigidArea(spacing));
@@ -241,6 +307,10 @@ class AcademicInfoPanel extends AbstractFormPanel {
         collegeComboBox.setMinimumSize(new Dimension(400, 50));
         collegeComboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        // University ComboBox
+        JComboBox<String> universityComboBox = createComboBox(
+            new String[] {"-- Select University --", "Anna University", "VTU", "JNTU", "KTU","Delhi University"}, 400, 45);
+
         try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/nexclub", "root", "admin")) {
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT name FROM colleges");
@@ -265,82 +335,108 @@ class AcademicInfoPanel extends AbstractFormPanel {
         validationLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         JButton submitButton = createFlatButton("Submit");
-    submitButton.addActionListener(e -> {
-    String fullName = MainFrame.basicDetails[0];
-    String phone = MainFrame.basicDetails[1];
-    String dob = MainFrame.basicDetails[2];
-    String gender = MainFrame.basicDetails[3];
+        submitButton.addActionListener(e -> {
+            String fullName = MainFrame.basicDetails[0];
+            String phone = MainFrame.basicDetails[1];
+            String dob = MainFrame.basicDetails[2];
+            String gender = MainFrame.basicDetails[3];
 
-    String selectedCollege = (String) collegeComboBox.getSelectedItem();
-    String selectedDegree = (String) degreeComboBox.getSelectedItem();
-    String selectedBranch = (String) branchComboBox.getSelectedItem();
-    String year = yearOfStudyField.getText().trim();
+            String selectedCollege = (String) collegeComboBox.getSelectedItem();
+            String selectedUniversity = (String) universityComboBox.getSelectedItem();
+            String selectedDegree = (String) degreeComboBox.getSelectedItem();
+            String selectedBranch = (String) branchComboBox.getSelectedItem();
+            String year = yearOfStudyField.getText().trim();
 
-    // Validation checks
-    if (fullName.isEmpty() || phone.isEmpty() || dob.isEmpty() || gender.isEmpty() ||
-        selectedCollege.equals("-- Select College --") ||
-        selectedDegree.equals("-- Select Degree --") ||
-        selectedBranch.equals("-- Select Branch --") ||
-        year.isEmpty()) {
-        
-        validationLabel.setText("Please complete all fields.");
-        validationLabel.setForeground(Color.RED);
-        return;
-    }
+            // Validation checks
+            if (fullName.isEmpty() || phone.isEmpty() || dob.isEmpty() || gender.isEmpty() ||
+                selectedCollege.equals("-- Select College --") ||
+                selectedUniversity.equals("-- Select University --") ||
+                selectedDegree.equals("-- Select Degree --") ||
+                selectedBranch.equals("-- Select Branch --") ||
+                year.isEmpty()) {
+                
+                validationLabel.setText("Please complete all fields.");
+                validationLabel.setForeground(Color.RED);
+                return;
+            }
 
-    try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/nexclub", "root", "admin")) {
-        // Get nID from login table
-        String nID = null;
-        PreparedStatement getNIDStmt = conn.prepareStatement(
-            "SELECT nID FROM login ORDER BY login_time DESC LIMIT 1");
-        ResultSet nIDRs = getNIDStmt.executeQuery();
-        if (nIDRs.next()) {
-            nID = nIDRs.getString("nID");
-        }
+            try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/nexclub", "root", "admin")) {
+                // Get nID from login table
+                String nID = null;
+                PreparedStatement getNIDStmt = conn.prepareStatement(
+                    "SELECT nID FROM login ORDER BY login_time DESC LIMIT 1");
+                ResultSet nIDRs = getNIDStmt.executeQuery();
+                if (nIDRs.next()) {
+                    nID = nIDRs.getString("nID");
+                }
 
-        // Check if profile exists
-        PreparedStatement checkStmt = conn.prepareStatement("SELECT COUNT(*) FROM Student WHERE fullName = ?");
-        checkStmt.setString(1, fullName);
-        ResultSet rs = checkStmt.executeQuery();
-        rs.next();
-        int count = rs.getInt(1);
+                if (nID == null) {
+                    validationLabel.setText("No user logged in.");
+                    validationLabel.setForeground(Color.RED);
+                    return;
+                }
 
-        if (count > 0) {
-            validationLabel.setText("Profile already exists.");
-            validationLabel.setForeground(Color.RED);
-        } else {
-            // Insert new profile
-            PreparedStatement insertStmt = conn.prepareStatement(
-                "INSERT INTO Student(fullName, phone, dob, gender, college, degree, branch, yearOfStudy, nID) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            
-            insertStmt.setString(1, fullName);
-            insertStmt.setString(2, phone);
-            insertStmt.setString(3, dob);
-            insertStmt.setString(4, gender);
-            insertStmt.setString(5, selectedCollege);
-            insertStmt.setString(6, selectedDegree);
-            insertStmt.setString(7, selectedBranch);
-            insertStmt.setString(8, year);
-            insertStmt.setString(9, nID);
-            insertStmt.executeUpdate();
+                // Check if profile exists
+                PreparedStatement checkStmt = conn.prepareStatement(
+                    "SELECT COUNT(*) FROM student WHERE nID = ?");
+                checkStmt.setString(1, nID);
+                ResultSet rs = checkStmt.executeQuery();
+                rs.next();
+                int count = rs.getInt(1);
 
-            validationLabel.setText("Profile successfully submitted.");
-            validationLabel.setForeground(new Color(0, 153, 0));
+                if (count > 0) {
+                    // Update existing profile
+                    PreparedStatement updateStmt = conn.prepareStatement(
+                        "UPDATE student SET fullName=?, phone=?, dob=?, gender=?, college=?, university=?, degree=?, branch=?, yearOfStudy=? WHERE nID=?");
+                    
+                    updateStmt.setString(1, fullName);
+                    updateStmt.setString(2, phone);
+                    updateStmt.setString(3, dob);
+                    updateStmt.setString(4, gender);
+                    updateStmt.setString(5, selectedCollege);
+                    updateStmt.setString(6, selectedUniversity);
+                    updateStmt.setString(7, selectedDegree);
+                    updateStmt.setString(8, selectedBranch);
+                    updateStmt.setString(9, year);
+                    updateStmt.setString(10, nID);
+                    updateStmt.executeUpdate();
 
-            // Add 2-second delay before switching to WelcomeUI
-            Timer timer = new Timer(2000, evt -> {
-                JFrame parentFrame = (JFrame)SwingUtilities.getWindowAncestor(this);
-                WelcomeUI.show(parentFrame);
-            });
-            timer.setRepeats(false); // Only execute once
-            timer.start();
-        }
-    } catch (Exception ex) {
-        ex.printStackTrace();
-        validationLabel.setText("Database error occurred.");
-        validationLabel.setForeground(Color.RED);
-    }
+                    validationLabel.setText("Profile successfully updated.");
+                    validationLabel.setForeground(new Color(0, 153, 0));
+                } else {
+                    // Insert new profile
+                    PreparedStatement insertStmt = conn.prepareStatement(
+                        "INSERT INTO student(nID, fullName, phone, dob, gender, college, university, degree, branch, yearOfStudy) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    
+                    insertStmt.setString(1, nID);
+                    insertStmt.setString(2, fullName);
+                    insertStmt.setString(3, phone);
+                    insertStmt.setString(4, dob);
+                    insertStmt.setString(5, gender);
+                    insertStmt.setString(6, selectedCollege);
+                    insertStmt.setString(7, selectedUniversity);
+                    insertStmt.setString(8, selectedDegree);
+                    insertStmt.setString(9, selectedBranch);
+                    insertStmt.setString(10, year);
+                    insertStmt.executeUpdate();
+
+                    validationLabel.setText("Profile successfully submitted.");
+                    validationLabel.setForeground(new Color(0, 153, 0));
+                }
+
+                // Add 2-second delay before switching to WelcomeUI
+                Timer timer = new Timer(2000, evt -> {
+                    JFrame parentFrame = (JFrame)SwingUtilities.getWindowAncestor(this);
+                    WelcomeUI.show(parentFrame);
+                });
+                timer.setRepeats(false); // Only execute once
+                timer.start();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                validationLabel.setText("Database error occurred.");
+                validationLabel.setForeground(Color.RED);
+            }
         });
 
         JButton backButton = createFlatButton("Back");
@@ -351,6 +447,8 @@ class AcademicInfoPanel extends AbstractFormPanel {
         contentBox.add(sectionTitle);
         contentBox.add(Box.createRigidArea(spacing));
         contentBox.add(createLabeledField("College", collegeComboBox));
+        contentBox.add(Box.createRigidArea(spacing));
+        contentBox.add(createLabeledField("University", universityComboBox));
         contentBox.add(Box.createRigidArea(spacing));
         contentBox.add(createLabeledField("Degree", degreeComboBox));
         contentBox.add(Box.createRigidArea(spacing));

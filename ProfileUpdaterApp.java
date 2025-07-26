@@ -10,19 +10,19 @@ import javax.swing.event.DocumentListener;
 
 public class ProfileUpdaterApp {
     public static void show(JFrame parent) {
-    try {
-        UIManager.setLookAndFeel(new FlatLightLaf());
-    } catch (Exception ex) {
-        System.err.println("Failed to initialize FlatLaf");
-    }
+        try {
+            UIManager.setLookAndFeel(new FlatLightLaf());
+        } catch (Exception ex) {
+            System.err.println("Failed to initialize FlatLaf");
+        }
 
-    SwingUtilities.invokeLater(() -> {
-        MainFrame mainFrame = new MainFrame();
-        parent.setContentPane(mainFrame.getContentPane()); // ✅ switch view
-        parent.revalidate();
-        parent.repaint();
-    });
-}
+        SwingUtilities.invokeLater(() -> {
+            MainFrame mainFrame = new MainFrame();
+            parent.setContentPane(mainFrame.getContentPane());
+            parent.revalidate();
+            parent.repaint();
+        });
+    }
 }
 
 class MainFrame extends JFrame {
@@ -124,129 +124,115 @@ abstract class AbstractFormPanel extends JPanel {
         label.setHorizontalAlignment(SwingConstants.CENTER);
         return label;
     }
+
+    protected boolean isAlphabetic(String input) {
+        return input.matches("[A-Za-z ]+");
+    }
+
+    protected boolean isValidPhone(String input) {
+        return input.matches("\\d{10}");
+    }
+
+    protected boolean isValidDate(String input) {
+        try {
+            new SimpleDateFormat("yyyy-MM-dd").parse(input);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }
 
-class AcademicInfoPanel extends AbstractFormPanel {
-    public AcademicInfoPanel(MainFrame frame) {
+class BasicDetailsPanel extends AbstractFormPanel {
+    private Font greetingFont = new Font("Microsoft JhengHei", Font.BOLD, 35);
+
+    public BasicDetailsPanel(MainFrame frame) {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
+
+        JPanel greetingPanel = new JPanel();
+        greetingPanel.setLayout(new BoxLayout(greetingPanel, BoxLayout.Y_AXIS));
+        greetingPanel.setBackground(Color.WHITE);
+        greetingPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 10, 0));
+
+        JLabel greeting = new JLabel("Hello, You!");
+        greeting.setFont(greetingFont);
+        JLabel instruction = new JLabel("Let's update the profile");
+        instruction.setFont(new Font("Microsoft JhengHei", Font.PLAIN, 15));
+
+        greetingPanel.add(greeting);
+        greetingPanel.add(Box.createRigidArea(new Dimension(0, 4)));
+        greetingPanel.add(instruction);
 
         JPanel centerPanel = new JPanel(new GridBagLayout());
         centerPanel.setBackground(Color.WHITE);
         Box contentBox = Box.createVerticalBox();
 
-        JLabel sectionTitle = new JLabel("Academic Details");
+        JLabel sectionTitle = new JLabel("Basic Details");
         sectionTitle.setFont(sectionFont);
         sectionTitle.setBorder(BorderFactory.createEmptyBorder(20, 0, 12, 0));
         sectionTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // College ComboBox with default item
-        JComboBox<String> collegeComboBox = new JComboBox<>();
-        collegeComboBox.addItem("-- Select College --");
-        collegeComboBox.setFont(fieldFont);
-        collegeComboBox.setMaximumSize(new Dimension(400, 50));
-        collegeComboBox.setPreferredSize(new Dimension(400, 50));
-        collegeComboBox.setMinimumSize(new Dimension(400, 50));
-        collegeComboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/nexclub", "root", "admin")) {
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT name FROM colleges");
-            while (rs.next()) {
-                collegeComboBox.addItem(rs.getString("name"));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // Degree and Branch ComboBoxes with default selections
-        JComboBox<String> degreeComboBox = createComboBox(
-            new String[] {"-- Select Degree --", "B.Tech", "M.Tech", "MBA", "BBA", "B.Sc", "M.Sc", "PhD"}, 300, 45);
-
-        JComboBox<String> branchComboBox = createComboBox(
-            new String[] {"-- Select Branch --", "Computer Science", "Mechanical Engineering", "Civil Engineering", "Electrical Engineering", "Electronics", "Chemical"}, 300, 45);
-
-        JTextField yearOfStudyField = createTextField();
+        JTextField fullNameField = createTextField();
+        JTextField phoneField = createTextField();
+        JTextField dobField = createTextField();
+        JComboBox<String> genderComboBox = createComboBox(
+            new String[] {"-- Select Gender --", "Male", "Female", "Other"}, 300, 45);
 
         JLabel validationLabel = createValidationLabel();
         validationLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         validationLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-        JButton submitButton = createFlatButton("Submit");
-        submitButton.addActionListener(e -> {
-            String fullName = MainFrame.basicDetails[0];
-            String phone = MainFrame.basicDetails[1];
-            String dob = MainFrame.basicDetails[2];
-            String gender = MainFrame.basicDetails[3];
+        JButton nextButton = createFlatButton("Next");
+        nextButton.addActionListener(e -> {
+            String fullName = fullNameField.getText().trim();
+            String phone = phoneField.getText().trim();
+            String dob = dobField.getText().trim();
+            String gender = (String) genderComboBox.getSelectedItem();
 
-            String selectedCollege = (String) collegeComboBox.getSelectedItem();
-            String selectedDegree = (String) degreeComboBox.getSelectedItem();
-            String selectedBranch = (String) branchComboBox.getSelectedItem();
-            String year = yearOfStudyField.getText().trim();
-
-            if (fullName.isEmpty() || phone.isEmpty() || dob.isEmpty() || gender.isEmpty()) {
-                validationLabel.setText("Basic details are incomplete.");
+            if (fullName.isEmpty() || phone.isEmpty() || dob.isEmpty() || gender.equals("-- Select Gender --")) {
+                validationLabel.setText("Please complete all fields.");
                 validationLabel.setForeground(Color.RED);
                 return;
             }
 
-            if (selectedCollege.equals("-- Select College --") ||
-                selectedDegree.equals("-- Select Degree --") ||
-                selectedBranch.equals("-- Select Branch --") ||
-                year.isEmpty()) {
-
-                validationLabel.setText("Please complete all academic fields.");
+            if (!isAlphabetic(fullName)) {
+                validationLabel.setText("Full name must contain only letters and spaces.");
                 validationLabel.setForeground(Color.RED);
                 return;
             }
 
-            try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/nexclub", "root", "admin")) {
-                PreparedStatement checkStmt = conn.prepareStatement("SELECT COUNT(*) FROM Student WHERE fullName = ?");
-                checkStmt.setString(1, fullName);
-                ResultSet rs = checkStmt.executeQuery();
-                rs.next();
-                int count = rs.getInt(1);
-
-                if (count > 0) {
-                    validationLabel.setText("Profile already exists.");
-                    validationLabel.setForeground(Color.RED);
-                } else {
-                    PreparedStatement insertStmt = conn.prepareStatement(
-                        "INSERT INTO Student(fullName, phone, dob, gender, college, degree, branch, yearOfStudy) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                    insertStmt.setString(1, fullName);
-                    insertStmt.setString(2, phone);
-                    insertStmt.setString(3, dob);
-                    insertStmt.setString(4, gender);
-                    insertStmt.setString(5, selectedCollege);
-                    insertStmt.setString(6, selectedDegree);
-                    insertStmt.setString(7, selectedBranch);
-                    insertStmt.setString(8, year);
-                    insertStmt.executeUpdate();
-
-                    validationLabel.setText("Profile successfully submitted.");
-                    validationLabel.setForeground(new Color(0, 153, 0));
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                validationLabel.setText("Database error occurred.");
+            if (!isValidPhone(phone)) {
+                validationLabel.setText("Phone number must be exactly 10 digits.");
                 validationLabel.setForeground(Color.RED);
+                return;
             }
+
+            if (!isValidDate(dob)) {
+                validationLabel.setText("Date of birth must be in YYYY-MM-DD format.");
+                validationLabel.setForeground(Color.RED);
+                return;
+            }
+
+            MainFrame.basicDetails[0] = fullName;
+            MainFrame.basicDetails[1] = phone;
+            MainFrame.basicDetails[2] = dob;
+            MainFrame.basicDetails[3] = gender;
+
+            frame.showCard("AcademicInfo");
         });
-
-        JButton backButton = createFlatButton("Back");
-        backButton.addActionListener(e -> frame.showCard("BasicDetails"));
 
         Dimension spacing = new Dimension(0, 16);
 
         contentBox.add(sectionTitle);
         contentBox.add(Box.createRigidArea(spacing));
-        contentBox.add(createLabeledField("College", collegeComboBox));
+        contentBox.add(createLabeledField("Full Name", fullNameField));
         contentBox.add(Box.createRigidArea(spacing));
-        contentBox.add(createLabeledField("Degree", degreeComboBox));
+        contentBox.add(createLabeledField("Phone Number", phoneField));
         contentBox.add(Box.createRigidArea(spacing));
-        contentBox.add(createLabeledField("Branch", branchComboBox));
+        contentBox.add(createLabeledField("Date of Birth (YYYY-MM-DD)", dobField));
         contentBox.add(Box.createRigidArea(spacing));
-        contentBox.add(createLabeledField("Year of Study", yearOfStudyField));
+        contentBox.add(createLabeledField("Gender", genderComboBox));
         contentBox.add(Box.createRigidArea(spacing));
         contentBox.add(validationLabel);
 
@@ -254,12 +240,11 @@ class AcademicInfoPanel extends AbstractFormPanel {
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 40, 20));
         buttonPanel.setBackground(Color.WHITE);
-        buttonPanel.add(backButton);
-        buttonPanel.add(submitButton);
+        buttonPanel.add(nextButton);
 
+        add(greetingPanel, BorderLayout.NORTH);
         add(centerPanel, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
     }
 }
-
-
+    

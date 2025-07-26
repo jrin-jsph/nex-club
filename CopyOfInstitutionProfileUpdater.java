@@ -5,7 +5,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InstitutionProfileUpdater {
+public class CopyOfInstitutionProfileUpdater {
     private static JFrame mainAppFrame;
 
     public static void show(JFrame parent) {
@@ -124,9 +124,7 @@ class InstitutionDetailsPanel extends BaseDetailsPanel {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
-        JTextField collegeNameField = createTextField();
-        JPopupMenu suggestionPopup = new JPopupMenu();
-
+        JComboBox<String> collegeName = createCollegeComboBox();
         JComboBox<String> type = createComboBox(new String[]{"Select Institution Type", "Public University", "Private College", "Institute", "School"});
         JTextField contact = createTextField();
         JLabel validationLabel = new JLabel(" ");
@@ -134,7 +132,7 @@ class InstitutionDetailsPanel extends BaseDetailsPanel {
         validationLabel.setForeground(Color.RED);
         validationLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        load(collegeNameField, type, contact);
+        load(collegeName, type, contact);
 
         JPanel greetingPanel = new JPanel();
         greetingPanel.setLayout(new BoxLayout(greetingPanel, BoxLayout.Y_AXIS));
@@ -157,7 +155,7 @@ class InstitutionDetailsPanel extends BaseDetailsPanel {
 
         box.add(title);
         box.add(Box.createRigidArea(new Dimension(0, 16)));
-        box.add(createLabeledField("College/University Name", collegeNameField));
+        box.add(createLabeledField("College/University Name", collegeName));
         box.add(Box.createRigidArea(new Dimension(0, 16)));
         box.add(createLabeledField("Institution Type", type));
         box.add(Box.createRigidArea(new Dimension(0, 16)));
@@ -171,10 +169,9 @@ class InstitutionDetailsPanel extends BaseDetailsPanel {
 
         JButton next = createFlatButton("Next");
         next.addActionListener(e -> {
-            String collegeName = collegeNameField.getText().trim();
             String contactNum = contact.getText().trim();
-
-            if (collegeName.isEmpty() ||
+            if (collegeName.getSelectedItem() == null ||
+                collegeName.getSelectedItem().toString().equals("Select College") ||
                 type.getSelectedItem().toString().equals("Select Institution Type") ||
                 contactNum.isEmpty()) {
                 validationLabel.setText("Please fill all institution details.");
@@ -189,7 +186,7 @@ class InstitutionDetailsPanel extends BaseDetailsPanel {
             }
 
             validationLabel.setText(" ");
-            InstitutionFrame.institutionDetails[0] = collegeName;
+            InstitutionFrame.institutionDetails[0] = collegeName.getSelectedItem().toString();
             InstitutionFrame.institutionDetails[1] = (String) type.getSelectedItem();
             InstitutionFrame.institutionDetails[2] = contactNum;
             frame.showCard("AdminDetails");
@@ -203,67 +200,14 @@ class InstitutionDetailsPanel extends BaseDetailsPanel {
         add(greetingPanel, BorderLayout.NORTH);
         add(center, BorderLayout.CENTER);
         add(south, BorderLayout.SOUTH);
-
-        // Live search logic
-        collegeNameField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            private void searchColleges(String input) {
-                SwingUtilities.invokeLater(() -> {
-                    suggestionPopup.setVisible(false);
-                    suggestionPopup.removeAll();
-
-                    if (input.isEmpty()) return;
-
-                    try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/nexclub", "root", "admin")) {
-                        PreparedStatement stmt = conn.prepareStatement(
-                            "SELECT name FROM Colleges WHERE LOWER(name) LIKE ?");
-                        stmt.setString(1, "%" + input.toLowerCase() + "%");
-
-                        ResultSet rs = stmt.executeQuery();
-                        while (rs.next()) {
-                            String college = rs.getString("name");
-                            JMenuItem item = new JMenuItem(college);
-                            item.setFont(fieldFont);
-                            item.setBackground(Color.WHITE);
-                            item.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-                            item.addActionListener(ev -> {
-                                collegeNameField.setText(college);
-                                suggestionPopup.setVisible(false);
-                            });
-                            suggestionPopup.add(item);
-                        }
-
-                        if (suggestionPopup.getComponentCount() > 0) {
-                            suggestionPopup.show(collegeNameField, 0, collegeNameField.getHeight());
-                            suggestionPopup.setFocusable(false);
-                        }
-
-                    } catch (SQLException ex) {
-                        ex.printStackTrace();
-                    }
-                });
-            }
-
-            public void insertUpdate(javax.swing.event.DocumentEvent e) {
-                searchColleges(collegeNameField.getText().trim());
-            }
-
-            public void removeUpdate(javax.swing.event.DocumentEvent e) {
-                searchColleges(collegeNameField.getText().trim());
-            }
-
-            public void changedUpdate(javax.swing.event.DocumentEvent e) {
-                searchColleges(collegeNameField.getText().trim());
-            }
-        });
     }
 
-    private void load(JTextField nameField, JComboBox<String> type, JTextField contact) {
-        nameField.setText("");
+    private void load(JComboBox<String> name, JComboBox<String> type, JTextField contact) {
+        name.setSelectedIndex(0);
         type.setSelectedIndex(0);
         contact.setText("");
     }
 }
-
 
 class AdminDetailsPanel extends BaseDetailsPanel {
     public AdminDetailsPanel(InstitutionFrame frame) {
@@ -346,7 +290,7 @@ class AdminDetailsPanel extends BaseDetailsPanel {
                 validationLabel.setForeground(new Color(0, 153, 0));
 
                 Timer timer = new Timer(2000, evt -> {
-                    JFrame mainFrame = InstitutionProfileUpdater.getMainAppFrame();
+                    JFrame mainFrame = CopyOfInstitutionProfileUpdater.getMainAppFrame();
                     if (mainFrame != null) {
                         WelcomeUI.show(mainFrame);
                     } else {

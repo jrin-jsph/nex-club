@@ -324,7 +324,7 @@ class AdminDetailsPanel extends BaseDetailsPanel {
             InstitutionFrame.adminDetails[2] = (String) dept.getSelectedItem();
 
             try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/nexclub", "root", "admin")) {
-                PreparedStatement stmt = conn.prepareStatement("INSERT INTO Institution(collegeName, institutionType, contactNumber, adminName, designation, department) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE institutionType=?, contactNumber=?, adminName=?, designation=?, department=?");
+                PreparedStatement stmt = conn.prepareStatement("INSERT INTO Institution(collegeName, institutionType, contactNumber, adminName, designation, department,nID) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE institutionType=?, contactNumber=?, adminName=?, designation=?, department=?");
                 stmt.setString(1, InstitutionFrame.institutionDetails[0]);
                 stmt.setString(2, InstitutionFrame.institutionDetails[1]);
                 stmt.setString(3, InstitutionFrame.institutionDetails[2]);

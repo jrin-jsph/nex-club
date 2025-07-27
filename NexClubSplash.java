@@ -92,6 +92,7 @@ public class NexClubSplash extends JWindow {
 
     private void showMainApp() {
         initializeDatabase();
+        runClgdataInBackground();
 
         JFrame main = new JFrame("NexClub App");
         main.setIconImage(new ImageIcon("logo/l1.png").getImage());
@@ -104,6 +105,17 @@ public class NexClubSplash extends JWindow {
         main.setVisible(true);
     }
 
+    private void runClgdataInBackground() {
+        new Thread(() -> {
+            try {
+                // Call Clgdata.main directly (no terminal/process)
+                Clgdata.main(new String[]{});
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
     private void initializeDatabase() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -114,14 +126,12 @@ public class NexClubSplash extends JWindow {
 
             Statement s = connection.createStatement();
 
-            // Create login table
             s.executeUpdate("CREATE TABLE IF NOT EXISTS login (" +
                 "nID VARCHAR(30) PRIMARY KEY, " +
                 "Password VARCHAR(100), " +
                 "login_time DATETIME, " +
                 "login_count INT)");
 
-            // Create register table
             s.executeUpdate("CREATE TABLE IF NOT EXISTS register (" +
                 "nID VARCHAR(30) PRIMARY KEY, " +
                 "email VARCHAR(100) UNIQUE, " +

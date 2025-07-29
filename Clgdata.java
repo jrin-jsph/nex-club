@@ -1,12 +1,11 @@
 import java.sql.*;
 
-public class Clgdata{
+public class Clgdata {
     public static void main(String[] args) {
         String url = "jdbc:mysql://localhost:3306/nexclub";
         String user = "root";
         String password = "admin";
 
-        // Full list of colleges (150+ entries)
         String[][] colleges = {
             {"College of Dairy Science & Technology, Kolahalamedu, Idukki", "CDI"},
             {"College of Dairy Science and Technology, Pookode", "CDP"},
@@ -147,11 +146,20 @@ public class Clgdata{
         };
 
         try (Connection conn = DriverManager.getConnection(url, user, password)) {
+            // Step 1: Create table if not exists
+            String createTableSQL = "CREATE TABLE IF NOT EXISTS colleges (" +
+                                    "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                                    "name VARCHAR(255) NOT NULL, " +
+                                    "abbreviation VARCHAR(50) NOT NULL)";
+            try (Statement stmt = conn.createStatement()) {
+                stmt.execute(createTableSQL);
+            }
+
+            // Step 2: Insert if not duplicate
             for (String[] college : colleges) {
                 String name = college[0];
                 String abbr = college[1];
 
-                // Check if exists by exact name & abbreviation
                 String checkSQL = "SELECT COUNT(*) FROM colleges WHERE name = ? AND abbreviation = ?";
                 try (PreparedStatement ps = conn.prepareStatement(checkSQL)) {
                     ps.setString(1, name);

@@ -43,11 +43,25 @@ public class NexclubDashboardUI extends JFrame {
         // Clubs Enrolled Card
         JPanel clubsEnrolled = createGradientCard("#FAD0C4", "#FFD1FF", "Clubs Enrolled", "7 Clubs");
         clubsEnrolled.setBounds(450, 80, 420, 90);
+        // Add mouse listener to open ClubsEnrolledUI
+        clubsEnrolled.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        clubsEnrolled.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                new ClubsEnrolledUI().setVisible(true);
+            }
+        });
         add(clubsEnrolled);
 
         // Available Clubs Card
         JPanel availableClubs = createGradientCard("#A1C4FD", "#C2E9FB", "Available Clubs", "20 Clubs");
         availableClubs.setBounds(900, 80, 420, 90);
+        // Add mouse listener to open ClubsInfoUI
+        availableClubs.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        availableClubs.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                new ClubsInfoUI().setVisible(true);
+            }
+        });
         add(availableClubs);
 
         // Duty Leaves Panel

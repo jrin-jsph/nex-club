@@ -4,7 +4,20 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-    
+        {
+            "type": "java",
+            "name": "NexClubSplash",
+            "request": "launch",
+            "mainClass": "NexClubSplash",
+            "projectName": "nex-club_70469ca2"
+        },
+        {
+            "type": "java",
+            "name": "NexclubDashboardUI",
+            "request": "launch",
+            "mainClass": "NexclubDashboardUI",
+            "projectName": "nex-club_70469ca2"
+        },
         {
             "type": "java",
             "name": "Current File",

@@ -1,4 +1,4 @@
-// StudentDashboard.java
+// CopyOfStudentDashboard5.java
 import com.formdev.flatlaf.FlatLightLaf;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -11,38 +11,34 @@ import java.util.List;
 import javax.swing.Timer;
 
 /**
- * StudentDashboard class, refactored to be a class that builds a panel.
- * It is instantiated by LoginRegisterUI after a successful login.
+ * CopyOfStudentDashboard5 class, as a JFrame.
+ * This version is compatible with being called from an external LoginRegisterUI.
  */
-public class StudentDashboard { // No longer extends JFrame
+public class CopyOfStudentDashboard5 extends JFrame { // Reverted to JFrame
     private CardLayout cardLayout;
     private JPanel contentCards;
     private JButton[] navButtons;
     private String[] navNames = {"Dashboard", "Browse Clubs", "Events", "Notifications"};
     private Color accentBlue = new Color(40, 104, 255);
     private Color pageBg = Color.WHITE;
-    private Color cardBorder = new Color(230, 230, 230); // Light grey border
+    private Color cardBorder = new Color(230, 230, 230); // Changed from white to light grey
     private int sidebarWidth = 220;
     private final String PREFERRED_FONT = "Microsoft JhengHei";
     private JPanel indicator;
     private int indicatorTargetY = 0;
     private Timer indicatorTimer;
     
-    // Panels for UI and layering
-    private JFrame parentFrame; // Reference to the main application window
-    private JPanel dashboardPanel; // The main panel for the dashboard UI
-    private JLayeredPane layeredPane; // For handling popups
-    private JPanel mainPanel; // Holds the dashboard UI (sidebar, topbar, content)
+    // Glass pane for popups
     private JPanel glass;
     private JPanel popupPanel;
     
     // Data lists
-    private List<Club> clubs = new ArrayList<>(); 
-    private List<EventItem> events = new ArrayList<>();
+    private List<Club> clubs = new ArrayList<>(); // Clubs for student's department
+    private List<EventItem> events = new ArrayList<>(); // Events for student's department
     private List<NotificationItem> notifications = new ArrayList<>();
-    private List<Club> myClubs = new ArrayList<>();
-    private List<Club> recentClubs = new ArrayList<>(); 
-    private List<EventItem> myAppliedEvents = new ArrayList<>();
+    private List<Club> myClubs = new ArrayList<>(); // Clubs student has joined
+    private List<Club> recentClubs = new ArrayList<>(); // 6 most recent clubs (for dashboard)
+    private List<EventItem> myAppliedEvents = new ArrayList<>(); // Events student has applied for
 
     private int joinedClubsCount = 0;
     private int eventsThisMonthCount = 0;
@@ -58,14 +54,13 @@ public class StudentDashboard { // No longer extends JFrame
     private Timer statusTimer;
 
     /**
-     * Constructor for the StudentDashboard class.
-     * @param parent The main application JFrame (from LoginRegisterUI).
+     * Constructor for the CopyOfStudentDashboard5 Frame.
      * @param nid The NID of the logged-in student (e.g., "STUABC123").
      */
-    public StudentDashboard(JFrame parent, String nid) {
-        this.parentFrame = parent;
-        this.nid = nid;
+    public CopyOfStudentDashboard5(String nid) {
+        super("Student Dashboard"); // JFrame constructor
         
+        this.nid = nid;
         if (this.nid == null || this.nid.length() < 6) {
             this.nid = "STUERR000"; // Fallback NID
             this.abbreviation = "ERR";
@@ -73,25 +68,15 @@ public class StudentDashboard { // No longer extends JFrame
             this.abbreviation = this.nid.substring(3, 6).toUpperCase();
         }
 
-        // 1. Create the main dashboard panel
-        dashboardPanel = new JPanel(new BorderLayout());
+        setTitle("Student Dashboard");
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Close this window, not the app
+        setExtendedState(JFrame.MAXIMIZED_BOTH); // Window opens maximized
+        setLayout(new BorderLayout());
+        getContentPane().setBackground(pageBg);
 
-        // 2. Create the layered pane for popups
-        layeredPane = new JLayeredPane();
-        dashboardPanel.add(layeredPane, BorderLayout.CENTER);
-        
-        // 3. Create the panel to hold the actual UI
-        mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(pageBg);
-        layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);
-        
-        // 4. Create the glass pane for dimming
-        createGlassPane();
-        layeredPane.add(glass, JLayeredPane.MODAL_LAYER);
-        
-        // 5. Build the UI inside the mainPanel
+        // UI must be initialized before showing status messages
         JPanel topBar = createTopBar();
-        mainPanel.add(topBar, BorderLayout.NORTH);
+        add(topBar, BorderLayout.NORTH);
 
         connectDatabase();
         if (dbConn == null) {
@@ -101,8 +86,9 @@ public class StudentDashboard { // No longer extends JFrame
             loadDataFromDB(); 
         }
         
+        // Pass the onLogoutAction to the sidebar creator
         JPanel sidebar = createSidebar();
-        mainPanel.add(sidebar, BorderLayout.WEST);
+        add(sidebar, BorderLayout.WEST);
         
         cardLayout = new CardLayout();
         contentCards = new JPanel(cardLayout);
@@ -111,31 +97,12 @@ public class StudentDashboard { // No longer extends JFrame
         contentCards.add(createBrowseClubsPanel(), "Browse Clubs");
         contentCards.add(createEventsPanel(), "Events");
         contentCards.add(createNotificationsPanel(), "Notifications");
-        mainPanel.add(contentCards, BorderLayout.CENTER);
+        add(contentCards, BorderLayout.CENTER);
         
-        // Add component listener to resize layered components
-        dashboardPanel.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                Dimension size = dashboardPanel.getSize();
-                layeredPane.setBounds(0, 0, size.width, size.height);
-                mainPanel.setBounds(0, 0, size.width, size.height);
-                glass.setBounds(0, 0, size.width, size.height);
-                if (glass.isVisible() && popupPanel != null) {
-                    resizePopup(popupPanel.getHeight() > 500); 
-                }
-            }
-        });
+        // Create and add the glass pane for popups
+        createGlassPane(); 
         
         SwingUtilities.invokeLater(() -> animateIndicatorTo(0));
-    }
-    
-    /**
-     * Public method to get the fully constructed dashboard panel.
-     * @return The main JPanel for the dashboard.
-     */
-    public Container getContentPane() {
-        return dashboardPanel;
     }
 
     private void connectDatabase() {
@@ -247,30 +214,33 @@ public class StudentDashboard { // No longer extends JFrame
         return s.split(",");
     }
 
+    // loadStaticDefaults() method removed
+
     /**
      * Creates the sidebar panel.
      * @return The configured JPanel for the sidebar.
      */
     private JPanel createSidebar() { 
-        JPanel side = new JPanel(new BorderLayout()); 
-        side.setBackground(pageBg); 
+        JPanel side = new JPanel(new BorderLayout()); // Use BorderLayout
+        side.setBackground(pageBg); // Changed from grey
         side.setPreferredSize(new Dimension(sidebarWidth, 0));
         side.setBorder(new EmptyBorder(18, 12, 18, 12));
 
+        // Panel to hold nav and indicator using null layout
         JPanel topContent = new JPanel(null);
         topContent.setOpaque(false);
 
         JPanel navPanel = new JPanel();
         navPanel.setOpaque(false);
         navPanel.setLayout(new BoxLayout(navPanel, BoxLayout.Y_AXIS));
-        navPanel.setBounds(10, 30, sidebarWidth - 20, 300); 
+        navPanel.setBounds(10, 30, sidebarWidth - 20, 300); // Bounds relative to topContent
         navButtons = new JButton[navNames.length];
         for (int i = 0; i < navNames.length; i++) {
             JButton b = new JButton(navNames[i]);
             b.setAlignmentX(Component.LEFT_ALIGNMENT);
             b.setHorizontalAlignment(SwingConstants.LEFT);
             b.setFocusPainted(false);
-            b.setBackground(pageBg); 
+            b.setBackground(pageBg); // Changed from grey
             b.setBorder(new EmptyBorder(10, 12, 10, 12));
             b.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
             applyAppFont(b, Font.PLAIN, 14);
@@ -284,40 +254,39 @@ public class StudentDashboard { // No longer extends JFrame
             navPanel.add(Box.createRigidArea(new Dimension(0, 6)));
             navButtons[i] = b;
         }
-        topContent.add(navPanel); 
+        topContent.add(navPanel); // Add navPanel to topContent
         indicator = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(Color.WHITE); 
+                g2.setColor(Color.WHITE); // Changed from light blue to white
                 g2.fillRoundRect(4, 0, 6, 44, 6, 6);
                 g2.dispose();
             }
         };
         indicator.setOpaque(false);
         indicator.setSize(14, 44);
-        indicator.setLocation(0, 30); 
-        topContent.add(indicator); 
+        indicator.setLocation(0, 30); // Location relative to topContent
+        topContent.add(indicator); // Add indicator to topContent
         
-        side.add(topContent, BorderLayout.CENTER); 
+        side.add(topContent, BorderLayout.CENTER); // Add topContent to CENTER
 
         JButton logout = new JButton("Logout");
-        makeButtonTransparent(logout); 
+        makeButtonTransparent(logout); // Use the helper method
         applyAppFont(logout, Font.BOLD, 13);
         logout.setHorizontalAlignment(SwingConstants.LEFT);
-        logout.setBorder(new EmptyBorder(10, 2, 10, 2)); 
+        logout.setBorder(new EmptyBorder(10, 2, 10, 2)); // Add padding
         
         // --- LOGOUT BUTTON CHANGED ---
-        // This now calls the static show method of LoginRegisterUI,
-        // passing the parent frame to switch the panel back to login.
+        // It now just disposes this JFrame
         logout.addActionListener(e -> {
-            // Assuming LoginRegisterUI has this static method:
-            LoginRegisterUI.show(parentFrame); 
+            this.dispose(); // Close the dashboard window
+            // Your LoginRegisterUI window should regain focus
         });
         // --- END OF CHANGE ---
 
-        side.add(logout, BorderLayout.SOUTH); 
+        side.add(logout, BorderLayout.SOUTH); // Add to SOUTH
         
         indicatorTimer = new Timer(8, null);
         indicatorTimer.addActionListener(e -> {
@@ -330,7 +299,7 @@ public class StudentDashboard { // No longer extends JFrame
                 int step = Math.max(1, Math.abs(indicatorTargetY - y) / 6);
                 y += dir * step;
                 indicator.setLocation(indicator.getX(), y);
-                topContent.repaint(); 
+                topContent.repaint(); // Repaint topContent
             }
         });
         return side;
@@ -345,11 +314,11 @@ public class StudentDashboard { // No longer extends JFrame
         for (int i = 0; i < navButtons.length; i++) {
             JButton b = navButtons[i];
             if (i == index) {
-                b.setBackground(Color.WHITE); 
+                b.setBackground(Color.WHITE); // Changed from light blue to white
                 b.setForeground(accentBlue);
                 applyAppFont(b, Font.BOLD, 14);
             } else {
-                b.setBackground(pageBg); 
+                b.setBackground(pageBg); // Changed from grey
                 b.setForeground(Color.BLACK);
                 applyAppFont(b, Font.PLAIN, 14);
             }
@@ -361,7 +330,7 @@ public class StudentDashboard { // No longer extends JFrame
         JPanel top = new JPanel(new BorderLayout());
         top.setBackground(pageBg);
         top.setBorder(new EmptyBorder(12, 12, 12, 12));
-        JLabel dashboardLabel = new JLabel("Student Dashboard"); 
+        JLabel dashboardLabel = new JLabel("Student Dashboard"); // Changed text
         dashboardLabel.setOpaque(true);
         dashboardLabel.setPreferredSize(new Dimension(420, 34));
         dashboardLabel.setBorder(new LineRoundedBorder(8, cardBorder, 1));
@@ -374,44 +343,44 @@ public class StudentDashboard { // No longer extends JFrame
         left.add(dashboardLabel);
         top.add(left, BorderLayout.WEST);
 
-        JPanel right = new JPanel(new GridBagLayout()); 
+        JPanel right = new JPanel(new GridBagLayout()); // Use GridBagLayout
         right.setOpaque(false);
 
         statusLabel = new JLabel(" ");
         applyAppFont(statusLabel, Font.BOLD, 13);
         statusLabel.setOpaque(true);
-        statusLabel.setBackground(new Color(220, 255, 220)); 
+        statusLabel.setBackground(new Color(220, 255, 220)); // Default green
         statusLabel.setBorder(new EmptyBorder(6, 10, 6, 10));
         statusLabel.setVisible(false);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(0, 0, 0, 15); 
+        gbc.insets = new Insets(0, 0, 0, 15); // Margin to the right
         gbc.gridx = 0;
         gbc.gridy = 0;
         right.add(statusLabel, gbc);
 
+        // Removed "John Doe" label
+        
         top.add(right, BorderLayout.EAST);
 
+        // Timer to hide the status label
         statusTimer = new Timer(3000, e -> statusLabel.setVisible(false));
         statusTimer.setRepeats(false);
 
         return top;
     }
 
+    // New method to show status messages
     private void showStatusMessage(String message, boolean isError) {
-        if (statusTimer == null) { // Guard against early calls
-             System.err.println("StatusLabel not ready: " + message);
-             return;
-        }
         if (statusTimer.isRunning()) {
             statusTimer.stop();
         }
         statusLabel.setText(message);
         if (isError) {
-            statusLabel.setBackground(new Color(255, 220, 220)); 
+            statusLabel.setBackground(new Color(255, 220, 220)); // Reddish
             statusLabel.setForeground(Color.RED.darker());
         } else {
-            statusLabel.setBackground(new Color(220, 255, 220)); 
+            statusLabel.setBackground(new Color(220, 255, 220)); // Greenish
             statusLabel.setForeground(Color.GREEN.darker());
         }
         statusLabel.setVisible(true);
@@ -425,6 +394,7 @@ public class StudentDashboard { // No longer extends JFrame
         panel.setBorder(new EmptyBorder(16,16,16,16));
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
+        // Changed "Welcome Back, John!" to "Welcome" and text color to black
         JLabel welcome = new JLabel("<html><div style='font-size:20px;'><b>Welcome</b></div><div style='color:black;'>Discover new opportunities and stay connected with your clubs.</div></html>");
         applyAppFont(welcome, Font.PLAIN, 14);
         header.add(welcome, BorderLayout.WEST);
@@ -433,6 +403,7 @@ public class StudentDashboard { // No longer extends JFrame
         stats.setBorder(new EmptyBorder(12, 0, 12, 0));
         RoundedPanel joined = createStatCardClickable(String.valueOf(joinedClubsCount), "Joined Clubs", new Color(58,78,237), () -> { cardLayout.show(contentCards, "Browse Clubs"); animateIndicatorTo(1); });
         RoundedPanel eventsStat = createStatCardClickable(String.valueOf(eventsThisMonthCount), "Events This Month", new Color(118,81,255), () -> { cardLayout.show(contentCards, "Events"); animateIndicatorTo(2); });
+        // Removed Pending Applications card
         stats.add(joined); 
         stats.add(eventsStat);
         header.add(stats, BorderLayout.SOUTH);
@@ -450,6 +421,7 @@ public class StudentDashboard { // No longer extends JFrame
         center.add(discoverTitle, BorderLayout.NORTH);
         JPanel gridPanel = new JPanel(new GridLayout(2,3,16,16));
         gridPanel.setOpaque(false);
+        // Changed to use recentClubs list
         for (Club c : recentClubs) {
             gridPanel.add(createMinimalClubCard(c));
         }
@@ -464,12 +436,13 @@ public class StudentDashboard { // No longer extends JFrame
         RoundedPanel upCard = new RoundedPanel(12, pageBg);
         upCard.setLayout(new BorderLayout());
         upCard.setBorder(new EmptyBorder(16,16,16,16));
-        JLabel upTitle = new JLabel("Upcoming Events (My Applications)"); 
+        JLabel upTitle = new JLabel("Upcoming Events (My Applications)"); // Title clarified
         applyAppFont(upTitle, Font.BOLD, 14);
         upCard.add(upTitle, BorderLayout.NORTH);
         JPanel evList = new JPanel();
         evList.setOpaque(false);
         evList.setLayout(new BoxLayout(evList, BoxLayout.Y_AXIS));
+        // Changed to use myAppliedEvents list
         for (EventItem ev : myAppliedEvents) {
             evList.add(createUpcomingEventRow(ev));
             evList.add(Box.createRigidArea(new Dimension(0,8)));
@@ -497,11 +470,12 @@ public class StudentDashboard { // No longer extends JFrame
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(pageBg);
         panel.setBorder(new EmptyBorder(16,16,16,16));
-        JLabel title = new JLabel("Browse Clubs (Your Department)"); 
+        JLabel title = new JLabel("Browse Clubs (Your Department)"); // Title clarified
         applyAppFont(title, Font.BOLD, 18);
         panel.add(title, BorderLayout.NORTH);
         JPanel grid = new JPanel(new GridLayout(0,3,12,12));
         grid.setOpaque(false);
+        // Populated from 'clubs' list (department specific)
         for (Club c : clubs) grid.add(createClubCardForList(c));
         JScrollPane gridScroll = new JScrollPane(grid, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         gridScroll.getViewport().setBackground(pageBg);
@@ -516,10 +490,12 @@ public class StudentDashboard { // No longer extends JFrame
         JPanel myList = new JPanel();
         myList.setOpaque(false);
         myList.setLayout(new BoxLayout(myList, BoxLayout.Y_AXIS));
+        // Populated from 'myClubs' list
         for (Club c : myClubs) {
             RoundedPanel row = new RoundedPanel(8, pageBg);
             row.setLayout(new BorderLayout());
             row.setBorder(new EmptyBorder(10,10,10,10));
+            // Simplified label to show only club name
             JLabel lab = new JLabel("<html><b>" + c.name + "</b></html>");
             applyAppFont(lab, Font.PLAIN, 13);
             row.add(lab, BorderLayout.CENTER);
@@ -543,11 +519,12 @@ public class StudentDashboard { // No longer extends JFrame
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(pageBg);
         panel.setBorder(new EmptyBorder(16,16,16,16));
-        JLabel title = new JLabel("Events (Your Department)"); 
+        JLabel title = new JLabel("Events (Your Department)"); // Title clarified
         applyAppFont(title, Font.BOLD, 18);
         panel.add(title, BorderLayout.NORTH);
         JPanel grid = new JPanel(new GridLayout(0,3,12,12));
         grid.setOpaque(false);
+        // Populated from 'events' list (department specific)
         for (EventItem e : events) grid.add(createEventCardForList(e));
         JScrollPane scroll = new JScrollPane(grid, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.getViewport().setBackground(pageBg);
@@ -560,7 +537,7 @@ public class StudentDashboard { // No longer extends JFrame
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(pageBg);
         panel.setBorder(new EmptyBorder(16,16,16,16));
-        JLabel title = new JLabel("Notifications (From Your Department's Events)"); 
+        JLabel title = new JLabel("Notifications (From Your Department's Events)"); // Title clarified
         applyAppFont(title, Font.BOLD, 18);
         panel.add(title, BorderLayout.NORTH);
         JPanel list = new JPanel();
@@ -570,7 +547,7 @@ public class StudentDashboard { // No longer extends JFrame
         if (notifications.isEmpty()) {
             JLabel none = new JLabel("No Notifications");
             applyAppFont(none, Font.PLAIN, 14);
-            none.setForeground(Color.BLACK); 
+            none.setForeground(Color.BLACK); // Changed from GRAY
             JPanel wrap = new JPanel(new FlowLayout(FlowLayout.LEFT));
             wrap.setOpaque(false);
             wrap.add(none);
@@ -598,7 +575,7 @@ public class StudentDashboard { // No longer extends JFrame
         bigLbl.setForeground(color);
         JLabel lbl = new JLabel(small);
         applyAppFont(lbl, Font.PLAIN, 12);
-        lbl.setForeground(Color.BLACK); 
+        lbl.setForeground(Color.BLACK); // Changed from GRAY
         JPanel left = new JPanel(new BorderLayout());
         left.setOpaque(false);
         left.add(bigLbl, BorderLayout.NORTH);
@@ -617,7 +594,7 @@ public class StudentDashboard { // No longer extends JFrame
         bigLbl.setForeground(color);
         JLabel lbl = new JLabel(small);
         applyAppFont(lbl, Font.PLAIN, 12);
-        lbl.setForeground(Color.BLACK); 
+        lbl.setForeground(Color.BLACK); // Changed from GRAY
         JPanel left = new JPanel(new BorderLayout());
         left.setOpaque(false);
         left.add(bigLbl, BorderLayout.NORTH);
@@ -638,7 +615,7 @@ public class StudentDashboard { // No longer extends JFrame
         card.setPreferredSize(new Dimension(200,120));
         JLabel t = new JLabel("<html><b>" + c.name + "</b></html>");
         applyAppFont(t, Font.BOLD, 13);
-        JTextArea desc = new JTextArea(c.description); 
+        JTextArea desc = new JTextArea(c.description); // Changed from shortDesc
         desc.setLineWrap(true);
         desc.setWrapStyleWord(true);
         desc.setOpaque(false);
@@ -658,10 +635,11 @@ public class StudentDashboard { // No longer extends JFrame
         RoundedPanel card = new RoundedPanel(12, Color.WHITE);
         card.setLayout(new BorderLayout());
         card.setBorder(new EmptyBorder(10,10,10,10));
-        card.setPreferredSize(new Dimension(200, 80)); 
+        card.setPreferredSize(new Dimension(200, 80)); // Reduced height
         JLabel title = new JLabel("<html><b style='font-size:14px;'>" + c.name + "</b></html>");
         applyAppFont(title, Font.BOLD, 14);
         title.setHorizontalAlignment(SwingConstants.CENTER);
+        // Removed description
         card.add(title, BorderLayout.CENTER);
         card.addMouseListener(new MouseAdapter(){
             @Override public void mouseClicked(MouseEvent e){ openClubPopup(c); }
@@ -675,10 +653,11 @@ public class StudentDashboard { // No longer extends JFrame
         RoundedPanel card = new RoundedPanel(12, Color.WHITE);
         card.setLayout(new BorderLayout());
         card.setBorder(new EmptyBorder(10,10,10,10));
-        card.setPreferredSize(new Dimension(200, 80)); 
+        card.setPreferredSize(new Dimension(200, 80)); // Same dimensions as club card
         JLabel title = new JLabel("<html><b style='font-size:14px;'>" + e.title + "</b></html>");
         applyAppFont(title, Font.BOLD, 14);
         title.setHorizontalAlignment(SwingConstants.CENTER);
+        // Removed other info
         card.add(title, BorderLayout.CENTER);
         card.addMouseListener(new MouseAdapter(){
             @Override public void mouseClicked(MouseEvent ev){ openEventPopup(e); }
@@ -695,9 +674,10 @@ public class StudentDashboard { // No longer extends JFrame
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
         JLabel title = new JLabel("<html><b>" + ev.title + "</b></html>");
         applyAppFont(title, Font.PLAIN, 13);
+        // Changed to show only date
         JLabel meta = new JLabel(ev.date);
         applyAppFont(meta, Font.PLAIN, 12);
-        meta.setForeground(Color.BLACK); 
+        meta.setForeground(Color.BLACK); // Changed from GRAY
         row.add(title, BorderLayout.WEST);
         row.add(meta, BorderLayout.EAST);
         row.addMouseListener(new MouseAdapter() {
@@ -717,7 +697,7 @@ public class StudentDashboard { // No longer extends JFrame
         applyAppFont(title, Font.BOLD, 14);
         JLabel meta = new JLabel(n.venue + " | " + n.date + " | " + n.time);
         applyAppFont(meta, Font.PLAIN, 12);
-        meta.setForeground(Color.BLACK); 
+        meta.setForeground(Color.BLACK); // Changed from GRAY
         JButton view = new JButton("View");
         makeButtonTransparent(view);
         applyAppFont(view, Font.PLAIN, 13);
@@ -750,7 +730,7 @@ public class StudentDashboard { // No longer extends JFrame
     }
 
     /**
-     * Creates the glass pane panel.
+     * Creates the glass pane panel and sets it on the JFrame.
      */
     private void createGlassPane() {
         glass = new JPanel(null);
@@ -758,12 +738,13 @@ public class StudentDashboard { // No longer extends JFrame
         glass.setBackground(new Color(0,0,0,100)); // Dims background
         glass.setVisible(false);
         glass.addMouseListener(new MouseAdapter(){});
+        setGlassPane(glass); // Re-added for JFrame
     }
 
     // Helper method to resize the popup
     private void resizePopup(boolean maximizedLike) {
         if (popupPanel == null) return;
-        Dimension size = layeredPane.getSize(); // Use layeredPane size
+        Dimension size = getContentPane().getSize(); // Reverted to getContentPane()
         if (maximizedLike) {
             popupPanel.setSize((int)(size.width*0.96), (int)(size.height*0.92));
         } else {
@@ -800,6 +781,7 @@ public class StudentDashboard { // No longer extends JFrame
         JLabel title = new JLabel("<html><div style='font-size:18px;'><b>" + c.name + "</b></div></html>");
         applyAppFont(title, Font.BOLD, 16);
         p.add(title, BorderLayout.NORTH);
+        // Changed to use c.description and remove location
         JTextArea desc = new JTextArea(c.description + "\n\nLeaders: " + c.leadersString());
         desc.setEditable(false); desc.setLineWrap(true); desc.setWrapStyleWord(true);
         desc.setOpaque(false);
@@ -815,6 +797,7 @@ public class StudentDashboard { // No longer extends JFrame
         back.addActionListener(e -> closePopup());
         join.addActionListener(e -> {
             if (dbConn != null) {
+                // Updated SQL to insert into my_clubs with nid and check for duplicates
                 String sql = "INSERT INTO my_clubs(nid, club_name) " +
                              "SELECT ?, ? WHERE NOT EXISTS " +
                              "(SELECT 1 FROM my_clubs WHERE nid = ? AND club_name = ?)";
@@ -826,9 +809,9 @@ public class StudentDashboard { // No longer extends JFrame
                     int rowsAffected = ps.executeUpdate();
                     
                     if (rowsAffected > 0) {
-                        myClubs.add(c); 
+                        myClubs.add(c); // Add to local list
                         joinedClubsCount = myClubs.size();
-                        updateDashboardCounts(); 
+                        updateDashboardCounts(); // Refresh UI
                         showStatusMessage("Joined " + c.name, false);
                     } else {
                         showStatusMessage("You have already joined this club.", true);
@@ -837,10 +820,11 @@ public class StudentDashboard { // No longer extends JFrame
                     showStatusMessage("DB error joining club.", true);
                 }
             } else {
+                // Fallback if DB is offline (though not ideal)
                 myClubs.add(c);
                 joinedClubsCount = myClubs.size();
                 updateDashboardCounts();
-                showStatusMessage("Joined " + c.name, false); 
+                showStatusMessage("Joined " + c.name, false); // Use status label
             }
             closePopup();
         });
@@ -869,6 +853,7 @@ public class StudentDashboard { // No longer extends JFrame
         back.addActionListener(e -> closePopup());
         apply.addActionListener(e -> {
             if (dbConn != null) {
+                // Updated SQL to insert into my_events and check for duplicates
                 String sql = "INSERT INTO my_events(nid, club_name, event_name, date, time) " +
                              "SELECT ?, ?, ?, ?, ? WHERE NOT EXISTS " +
                              "(SELECT 1 FROM my_events WHERE nid = ? AND event_name = ?)";
@@ -884,9 +869,9 @@ public class StudentDashboard { // No longer extends JFrame
                     int rowsAffected = ps.executeUpdate();
                     
                     if (rowsAffected > 0) {
-                        myAppliedEvents.add(ev); 
+                        myAppliedEvents.add(ev); // Add to local list
                         pendingApplicationsCount = myAppliedEvents.size();
-                        updateDashboardCounts(); 
+                        updateDashboardCounts(); // Refresh UI
                         showStatusMessage("Applied to " + ev.title, false);
                     } else {
                         showStatusMessage("Already applied to this event.", true);
@@ -897,7 +882,7 @@ public class StudentDashboard { // No longer extends JFrame
             } else {
                 pendingApplicationsCount++;
                 updateDashboardCounts();
-                showStatusMessage("Applied to " + ev.title, false); 
+                showStatusMessage("Applied to " + ev.title, false); // Use status label
             }
             closePopup();
         });
@@ -907,11 +892,13 @@ public class StudentDashboard { // No longer extends JFrame
     }
 
     private void openMyClubPopup(Club c) {
+        // This 'p' is the original club details panel
         JPanel p = new JPanel(new BorderLayout());
         p.setOpaque(false);
         JLabel title = new JLabel("<html><div style='font-size:18px;'><b>" + c.name + "</b></div></html>");
         applyAppFont(title, Font.BOLD, 16);
         p.add(title, BorderLayout.NORTH);
+        // Changed to use c.description
         JTextArea desc = new JTextArea(c.description + "\n\nLeaders: " + c.leadersString());
         desc.setEditable(false); desc.setLineWrap(true); desc.setWrapStyleWord(true); desc.setOpaque(false);
         applyAppFont(desc, Font.PLAIN, 13);
@@ -920,12 +907,12 @@ public class StudentDashboard { // No longer extends JFrame
         btns.setOpaque(false);
         JButton back = new JButton("Back");
         JButton showEvents = new JButton("Show Events");
-        JButton leave = new JButton("Leave Club"); 
+        JButton leave = new JButton("Leave Club"); // Added Leave button
         
         makeButtonTransparent(back); 
         makeButtonTransparent(showEvents);
         makeButtonTransparent(leave);
-        leave.setForeground(Color.RED.darker()); 
+        leave.setForeground(Color.RED.darker()); // Make leave button red
         
         back.setPreferredSize(new Dimension(88,38)); 
         showEvents.setPreferredSize(new Dimension(98,38));
@@ -938,7 +925,8 @@ public class StudentDashboard { // No longer extends JFrame
         back.addActionListener(e -> closePopup());
         
         leave.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(dashboardPanel, "Are you sure you want to leave " + c.name + "?", "Confirm Leave", JOptionPane.YES_NO_OPTION);
+            // Use JOptionPane relative to this panel
+            int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to leave " + c.name + "?", "Confirm Leave", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
                 if (dbConn != null) {
                     try (PreparedStatement ps = dbConn.prepareStatement("DELETE FROM my_clubs WHERE nid = ? AND club_name = ?")) {
@@ -946,9 +934,9 @@ public class StudentDashboard { // No longer extends JFrame
                         ps.setString(2, c.name);
                         int rowsAffected = ps.executeUpdate();
                         if (rowsAffected > 0) {
-                            myClubs.remove(c); 
+                            myClubs.remove(c); // Remove from local list
                             joinedClubsCount = myClubs.size();
-                            updateDashboardCounts(); 
+                            updateDashboardCounts(); // Refresh UI
                             showStatusMessage("Left " + c.name, false);
                             closePopup();
                         } else {
@@ -962,6 +950,7 @@ public class StudentDashboard { // No longer extends JFrame
         });
         
         showEvents.addActionListener(e -> {
+            // This 'wrapper' is the new event list panel
             JPanel wrapper = new JPanel(new BorderLayout()); 
             wrapper.setOpaque(false);
             JLabel h = new JLabel("<html><b>Events for " + c.name + "</b></html>");
@@ -973,7 +962,7 @@ public class StudentDashboard { // No longer extends JFrame
             list.setOpaque(false);
             list.setLayout(new BoxLayout(list, BoxLayout.Y_AXIS));
             boolean found = false;
-            for (EventItem ev : events) { 
+            for (EventItem ev : events) { // Check against department's events
                 if (ev.clubName.equalsIgnoreCase(c.name)) {
                     JPanel row = new JPanel(new BorderLayout());
                     row.setOpaque(false);
@@ -981,7 +970,7 @@ public class StudentDashboard { // No longer extends JFrame
                     applyAppFont(t, Font.BOLD, 14);
                     JLabel meta = new JLabel(ev.date + " | " + ev.time + " | " + ev.venue);
                     applyAppFont(meta, Font.PLAIN, 12);
-                    meta.setForeground(Color.BLACK); 
+                    meta.setForeground(Color.BLACK); // Changed from GRAY
                     row.add(t, BorderLayout.WEST); row.add(meta, BorderLayout.EAST);
                     list.add(row); list.add(Box.createRigidArea(new Dimension(0,8)));
                     found = true;
@@ -990,7 +979,7 @@ public class StudentDashboard { // No longer extends JFrame
             if (!found) {
                 JLabel none = new JLabel("No Events Added for this club");
                 applyAppFont(none, Font.PLAIN, 14);
-                none.setForeground(Color.BLACK); 
+                none.setForeground(Color.BLACK); // Changed from GRAY
                 JPanel wrap = new JPanel(new FlowLayout(FlowLayout.LEFT)); wrap.setOpaque(false); wrap.add(none);
                 list.add(wrap);
             }
@@ -998,6 +987,7 @@ public class StudentDashboard { // No longer extends JFrame
             sc.getViewport().setBackground(pageBg); sc.setBorder(null);
             wrapper.add(sc, BorderLayout.CENTER);
 
+            // Add a "Back" button to this event list panel
             JPanel eventBtns = new JPanel(new FlowLayout(FlowLayout.CENTER, 16, 8));
             eventBtns.setOpaque(false);
             JButton eventBack = new JButton("Back");
@@ -1005,26 +995,28 @@ public class StudentDashboard { // No longer extends JFrame
             eventBack.setPreferredSize(new Dimension(88, 38));
             applyAppFont(eventBack, Font.BOLD, 13);
             eventBack.addActionListener(backEvent -> {
+                // Replace popupPanel's content back to the original 'p'
                 popupPanel.removeAll();
                 popupPanel.add(p, BorderLayout.CENTER);
-                resizePopup(true); 
+                resizePopup(true); // Restore to maximized
                 popupPanel.revalidate();
                 popupPanel.repaint();
             });
             eventBtns.add(eventBack);
-            wrapper.add(eventBtns, BorderLayout.SOUTH);
+wrapper.add(eventBtns, BorderLayout.SOUTH);
 
+            // Replace the popup's content with the new 'wrapper'
             popupPanel.removeAll();
             popupPanel.add(wrapper, BorderLayout.CENTER);
-            resizePopup(false); 
+            resizePopup(false); // Make it smaller
             popupPanel.revalidate();
             popupPanel.repaint();
         });
         btns.add(back); 
         btns.add(showEvents);
-        btns.add(leave); 
+        btns.add(leave); // Add the leave button
         p.add(btns, BorderLayout.SOUTH);
-        showPopup(p, true); 
+        showPopup(p, true); // Show the initial club popup as maximized
     }
 
     private void closePopup() {
@@ -1034,17 +1026,9 @@ public class StudentDashboard { // No longer extends JFrame
             repaint();
         }
     }
-    
-    // repaint() is a method of Component, which this class is not.
-    // Call repaint on dashboardPanel instead.
-    private void repaint() {
-        if (dashboardPanel != null) {
-            dashboardPanel.repaint();
-        }
-    }
-
 
     private void updateDashboardCounts() {
+        // Reload data from DB to get fresh counts and lists
         loadDataFromDB(); 
         
         String visible = getCurrentVisibleCard();
@@ -1103,7 +1087,7 @@ public class StudentDashboard { // No longer extends JFrame
             if (highlight) { 
                 g2.setColor(new Color(120,160,255)); g2.setStroke(new BasicStroke(2f)); 
             } else { 
-                g2.setColor(cardBorder); 
+                g2.setColor(cardBorder); // Use the class-level cardBorder color
                 g2.setStroke(new BasicStroke(1f)); 
             }
             g2.draw(new RoundRectangle2D.Float(1,1,getWidth()-3,getHeight()-3,radius,radius));
@@ -1126,22 +1110,23 @@ public class StudentDashboard { // No longer extends JFrame
 
     private class SidebarHoverAdapter extends MouseAdapter {
         private final JButton btn; 
-        private Color normal = pageBg; 
+        private Color normal = pageBg; // Changed from grey
         private Color hover = new Color(238,243,255);
         public SidebarHoverAdapter(JButton b) { btn = b; }
         @Override public void mouseEntered(MouseEvent e){ if (btn.getBackground().equals(normal)) btn.setBackground(hover); }
-        @Override public void mouseExited(MouseEvent e){ Color sel = Color.WHITE; if (!btn.getBackground().equals(sel)) btn.setBackground(normal); } 
+        @Override public void mouseExited(MouseEvent e){ Color sel = Color.WHITE; if (!btn.getBackground().equals(sel)) btn.setBackground(normal); } // Changed from light blue
     }
     
     /**
-     * Static show method to be called from LoginRegisterUI.
-     * This method creates the dashboard and injects its panel into the parent frame.
-     * @param parent The main application JFrame
+     * ADDED BACK: Static show method to be called from LoginRegisterUI.
+     * This method creates and shows the dashboard as a new, maximized JFrame.
+     * @param parent The parent frame (can be null, but good practice to pass)
      * @param nid The student's NID (e.g., "STUABC123")
      */
     public static void show(JFrame parent, String nid) {
-        if (parent == null) return;
-        
+        if (parent != null) {
+            parent.setVisible(false); // Hide the parent login window
+        }
         try { 
             FlatLightLaf.setup(); 
         } catch (Exception ex) { 
@@ -1149,27 +1134,27 @@ public class StudentDashboard { // No longer extends JFrame
         }
         
         SwingUtilities.invokeLater(() -> {
-            // 1. Maximize the parent frame
-            parent.setExtendedState(JFrame.MAXIMIZED_BOTH);
-            
-            // 2. Create the dashboard instance, passing the parent frame
-            StudentDashboard dashboard = new StudentDashboard(parent, nid);
-            
-            // 3. Get the dashboard's main panel
-            Container dashboardPane = dashboard.getContentPane();
-            
-            // 4. Set the main frame's content to be the dashboard panel
-            parent.getContentPane().removeAll();
-            parent.getContentPane().add(dashboardPane, BorderLayout.CENTER);
-            parent.revalidate();
-            parent.repaint();
+            CopyOfStudentDashboard5 dashboard = new CopyOfStudentDashboard5(nid);
+            // Add a listener to show the parent window again when this one is closed
+            dashboard.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    if (parent != null) {
+                        parent.setVisible(true); // Re-show the login window
+                    }
+                }
+            });
+            dashboard.setVisible(true);
         });
     }
 
-    // --- Inner Data Classes ---
+    // --- Updated Inner Data Classes ---
 
+    /**
+     * Represents a Club. Updated to match new DB schema.
+     */
     private class Club { 
-        int id; 
+        int id; // Club's primary key from 'clubs' table
         String name, description; 
         String[] leaders; 
         
@@ -1191,6 +1176,9 @@ public class StudentDashboard { // No longer extends JFrame
         } 
     }
     
+    /**
+     * Represents an Event. This class was already compatible.
+     */
     private class EventItem { 
         String title, clubName, venue, date, time; 
         String[] leaders; 
@@ -1210,6 +1198,9 @@ public class StudentDashboard { // No longer extends JFrame
         } 
     }
     
+    /**
+     * Represents a Notification. This class was already compatible.
+     */
     private class NotificationItem { 
         String club,eventName,venue,date,time; 
         NotificationItem(String a,String b,String c,String d,String e){
@@ -1217,10 +1208,5 @@ public class StudentDashboard { // No longer extends JFrame
         } 
     }
 }
-// Assuming LoginRegisterUI.java has this method, as implied by AdminDashboard.java
-// class LoginRegisterUI {
-//    public static void show(JFrame parent) {
-//        // Logic to show login panel in parent frame
-//    }
-// }
+class Logout {} // This class is no longer used but safe to keep
 

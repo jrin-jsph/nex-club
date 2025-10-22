@@ -265,7 +265,7 @@ public class LoginRegisterUI {
                                 } else if (roleChar == 'S') {
                                     // 🚨🚨 THE BUG IS LIKELY IN THIS FILE 🚨🚨
                                     // 🚨 Go to StudentDashboard.java and check its 'show' method
-                                    SwingUtilities.invokeLater(() -> StudentDashboard.show(parent));
+                                    SwingUtilities.invokeLater(() -> StudentDashboard.show(parent,id));
                                 } else {
                                     // Fallback in case of bad ID data
                                     loginStatus.setText("Login successful, but role is invalid.");

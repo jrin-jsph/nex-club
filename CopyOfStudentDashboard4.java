@@ -1,4 +1,4 @@
-// StudentDashboard.java
+// CopyOfStudentDashboard4.java
 import com.formdev.flatlaf.FlatLightLaf;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -10,99 +10,55 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Timer;
 
-/**
- * StudentDashboard class, refactored to be a class that builds a panel.
- * It is instantiated by LoginRegisterUI after a successful login.
- */
-public class StudentDashboard { // No longer extends JFrame
+public class CopyOfStudentDashboard4 extends JFrame {
     private CardLayout cardLayout;
     private JPanel contentCards;
     private JButton[] navButtons;
     private String[] navNames = {"Dashboard", "Browse Clubs", "Events", "Notifications"};
     private Color accentBlue = new Color(40, 104, 255);
     private Color pageBg = Color.WHITE;
-    private Color cardBorder = new Color(230, 230, 230); // Light grey border
+    private Color cardBorder = new Color(220, 220, 220);
     private int sidebarWidth = 220;
     private final String PREFERRED_FONT = "Microsoft JhengHei";
     private JPanel indicator;
     private int indicatorTargetY = 0;
     private Timer indicatorTimer;
-    
-    // Panels for UI and layering
-    private JFrame parentFrame; // Reference to the main application window
-    private JPanel dashboardPanel; // The main panel for the dashboard UI
-    private JLayeredPane layeredPane; // For handling popups
-    private JPanel mainPanel; // Holds the dashboard UI (sidebar, topbar, content)
     private JPanel glass;
     private JPanel popupPanel;
-    
-    // Data lists
-    private List<Club> clubs = new ArrayList<>(); 
+    private List<Club> clubs = new ArrayList<>();
     private List<EventItem> events = new ArrayList<>();
     private List<NotificationItem> notifications = new ArrayList<>();
     private List<Club> myClubs = new ArrayList<>();
-    private List<Club> recentClubs = new ArrayList<>(); 
-    private List<EventItem> myAppliedEvents = new ArrayList<>();
-
     private int joinedClubsCount = 0;
     private int eventsThisMonthCount = 0;
     private int pendingApplicationsCount = 0;
     private Connection dbConn = null;
-    
-    // Student-specific data
-    private String nid;
-    private String abbreviation;
 
     // Status label for non-blocking messages
     private JLabel statusLabel;
     private Timer statusTimer;
 
-    /**
-     * Constructor for the StudentDashboard class.
-     * @param parent The main application JFrame (from LoginRegisterUI).
-     * @param nid The NID of the logged-in student (e.g., "STUABC123").
-     */
-    public StudentDashboard(JFrame parent, String nid) {
-        this.parentFrame = parent;
-        this.nid = nid;
+    public CopyOfStudentDashboard4() {
+        setTitle("Student Dashboard");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setExtendedState(JFrame.MAXIMIZED_BOTH); // Window opens maximized
+        setLayout(new BorderLayout());
+        getContentPane().setBackground(pageBg);
         
-        if (this.nid == null || this.nid.length() < 6) {
-            this.nid = "STUERR000"; // Fallback NID
-            this.abbreviation = "ERR";
-        } else {
-            this.abbreviation = this.nid.substring(3, 6).toUpperCase();
-        }
-
-        // 1. Create the main dashboard panel
-        dashboardPanel = new JPanel(new BorderLayout());
-
-        // 2. Create the layered pane for popups
-        layeredPane = new JLayeredPane();
-        dashboardPanel.add(layeredPane, BorderLayout.CENTER);
-        
-        // 3. Create the panel to hold the actual UI
-        mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(pageBg);
-        layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);
-        
-        // 4. Create the glass pane for dimming
-        createGlassPane();
-        layeredPane.add(glass, JLayeredPane.MODAL_LAYER);
-        
-        // 5. Build the UI inside the mainPanel
+        // UI must be initialized before showing status messages
         JPanel topBar = createTopBar();
-        mainPanel.add(topBar, BorderLayout.NORTH);
+        add(topBar, BorderLayout.NORTH);
 
         connectDatabase();
         if (dbConn == null) {
-            showStatusMessage("DB connection failed. App cannot function.", true);
-        } else {
-            prepareTables(); 
-            loadDataFromDB(); 
+            showStatusMessage("DB connection failed. Using static data.", true);
         }
         
+        prepareTables();
+        loadDataFromDB();
+        
         JPanel sidebar = createSidebar();
-        mainPanel.add(sidebar, BorderLayout.WEST);
+        add(sidebar, BorderLayout.WEST);
         
         cardLayout = new CardLayout();
         contentCards = new JPanel(cardLayout);
@@ -111,31 +67,13 @@ public class StudentDashboard { // No longer extends JFrame
         contentCards.add(createBrowseClubsPanel(), "Browse Clubs");
         contentCards.add(createEventsPanel(), "Events");
         contentCards.add(createNotificationsPanel(), "Notifications");
-        mainPanel.add(contentCards, BorderLayout.CENTER);
+        add(contentCards, BorderLayout.CENTER);
         
-        // Add component listener to resize layered components
-        dashboardPanel.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                Dimension size = dashboardPanel.getSize();
-                layeredPane.setBounds(0, 0, size.width, size.height);
-                mainPanel.setBounds(0, 0, size.width, size.height);
-                glass.setBounds(0, 0, size.width, size.height);
-                if (glass.isVisible() && popupPanel != null) {
-                    resizePopup(popupPanel.getHeight() > 500); 
-                }
-            }
-        });
+        createGlassPane();
         
         SwingUtilities.invokeLater(() -> animateIndicatorTo(0));
-    }
-    
-    /**
-     * Public method to get the fully constructed dashboard panel.
-     * @return The main JPanel for the dashboard.
-     */
-    public Container getContentPane() {
-        return dashboardPanel;
+        pack();
+        setVisible(true);
     }
 
     private void connectDatabase() {
@@ -151,95 +89,57 @@ public class StudentDashboard { // No longer extends JFrame
     private void prepareTables() {
         if (dbConn == null) return;
         try (Statement st = dbConn.createStatement()) {
-            st.execute("CREATE TABLE IF NOT EXISTS my_clubs (id INT AUTO_INCREMENT PRIMARY KEY, nid VARCHAR(255), club_name VARCHAR(255))");
-            st.execute("CREATE TABLE IF NOT EXISTS my_events (id INT AUTO_INCREMENT PRIMARY KEY, nid VARCHAR(255), club_name VARCHAR(255), event_name VARCHAR(255), date VARCHAR(50), time VARCHAR(50))");
-        } catch (SQLException e) {
+            st.execute("CREATE TABLE IF NOT EXISTS clubs (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), short_desc TEXT, leaders TEXT, location VARCHAR(255), next_event VARCHAR(255))");
+            st.execute("CREATE TABLE IF NOT EXISTS events (id INT AUTO_INCREMENT PRIMARY KEY, title VARCHAR(255), club_name VARCHAR(255), leaders TEXT, venue VARCHAR(255), date VARCHAR(50), time VARCHAR(50))");
+            st.execute("CREATE TABLE IF NOT EXISTS notifications (id INT AUTO_INCREMENT PRIMARY KEY, club VARCHAR(255), event_name VARCHAR(255), venue VARCHAR(255), date VARCHAR(50), time VARCHAR(50), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+            st.execute("CREATE TABLE IF NOT EXISTS my_clubs (id INT AUTO_INCREMENT PRIMARY KEY, club_id INT, joined_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+        } catch (SQLException ignored) {
             showStatusMessage("Failed to prepare DB tables.", true);
         }
     }
 
     private void loadDataFromDB() {
-        clubs.clear(); 
-        events.clear(); 
-        notifications.clear(); 
-        myClubs.clear();
-        recentClubs.clear();
-        myAppliedEvents.clear();
-        
+        clubs.clear(); events.clear(); notifications.clear(); myClubs.clear();
         if (dbConn == null) {
-            showStatusMessage("Database not connected. Cannot load data.", true);
+            loadStaticDefaults();
             return;
         }
-
         try {
-            // 1. Load department-specific clubs (for Browse Clubs tab)
-            try (PreparedStatement ps = dbConn.prepareStatement("SELECT id, club_name, leaders, description FROM clubs WHERE abbreviation = ?")) {
-                ps.setString(1, this.abbreviation);
-                ResultSet rs = ps.executeQuery();
-                while (rs.next()) {
-                    clubs.add(new Club(rs.getInt("id"), rs.getString("club_name"), rs.getString("description"), split(rs.getString("leaders"))));
-                }
-            }
-            
-            // 2. Load department-specific events (for Events tab)
-            try (PreparedStatement ps = dbConn.prepareStatement("SELECT event_name, club_name, leaders, venue, date, time FROM events WHERE abbreviation = ?")) {
-                ps.setString(1, this.abbreviation);
-                ResultSet rs = ps.executeQuery();
-                while (rs.next()) {
-                    events.add(new EventItem(rs.getString("event_name"), rs.getString("club_name"), split(rs.getString("leaders")), rs.getString("venue"), rs.getString("date"), rs.getString("time")));
-                }
-            }
-            
-            // 3. Populate Notifications from the events list
-            for (EventItem ev : events) {
-                notifications.add(new NotificationItem(ev.clubName, ev.title, ev.venue, ev.date, ev.time));
-            }
-
-            // 4. Load clubs *this student* has joined (for My Clubs section)
-            try (PreparedStatement ps = dbConn.prepareStatement("SELECT c.id, c.club_name, c.description, c.leaders FROM clubs c JOIN my_clubs m ON c.club_name = m.club_name WHERE m.nid = ?")) {
-                ps.setString(1, this.nid);
-                ResultSet rs = ps.executeQuery();
-                while (rs.next()) {
-                    myClubs.add(new Club(rs.getInt("id"), rs.getString("club_name"), rs.getString("description"), split(rs.getString("leaders"))));
-                }
-            }
-            
-            // 5. Load 6 most recent clubs (for Dashboard "Discover" section)
             try (Statement st = dbConn.createStatement()) {
-                 ResultSet rs = st.executeQuery("SELECT id, club_name, leaders, description FROM clubs ORDER BY id DESC LIMIT 6");
-                 while (rs.next()) {
-                    recentClubs.add(new Club(rs.getInt("id"), rs.getString("club_name"), rs.getString("description"), split(rs.getString("leaders"))));
-                }
-            }
-
-            // 6. Load events *this student* has applied for (for Dashboard "Upcoming Events")
-            try (PreparedStatement ps = dbConn.prepareStatement(
-                "SELECT m.event_name, m.club_name, e.leaders, e.venue, m.date, m.time " +
-                "FROM my_events m LEFT JOIN events e ON m.event_name = e.event_name AND m.club_name = e.club_name " +
-                "WHERE m.nid = ?")) {
-                ps.setString(1, this.nid);
-                ResultSet rs = ps.executeQuery();
+                ResultSet rs = st.executeQuery("SELECT * FROM clubs");
                 while (rs.next()) {
-                    myAppliedEvents.add(new EventItem(
-                        rs.getString("event_name"), 
-                        rs.getString("club_name"), 
-                        split(rs.getString("leaders")), // leaders from 'events' table
-                        rs.getString("venue"), // venue from 'events' table
-                        rs.getString("date"), // date from 'my_events'
-                        rs.getString("time") // time from 'my_events'
-                    ));
+                    String name = rs.getString("name");
+                    String shortDesc = rs.getString("short_desc");
+                    String leaders = rs.getString("leaders");
+                    String loc = rs.getString("location");
+                    String next = rs.getString("next_event");
+                    clubs.add(new Club(name, shortDesc, split(leaders), loc, next));
+                }
+                rs = st.executeQuery("SELECT * FROM events");
+                while (rs.next()) {
+                    String title = rs.getString("title");
+                    String clubName = rs.getString("club_name");
+                    String leaders = rs.getString("leaders");
+                    String venue = rs.getString("venue");
+                    String date = rs.getString("date");
+                    String time = rs.getString("time");
+                    events.add(new EventItem(title, clubName, split(leaders), venue, date, time));
+                }
+                rs = st.executeQuery("SELECT n.club, n.event_name, n.venue, n.date, n.time FROM notifications n ORDER BY n.created_at DESC");
+                while (rs.next()) {
+                    notifications.add(new NotificationItem(rs.getString("club"), rs.getString("event_name"), rs.getString("venue"), rs.getString("date"), rs.getString("time")));
+                }
+                rs = st.executeQuery("SELECT c.* FROM clubs c JOIN my_clubs m ON c.id = m.club_id");
+                while (rs.next()) {
+                    myClubs.add(new Club(rs.getString("name"), rs.getString("short_desc"), split(rs.getString("leaders")), rs.getString("location"), rs.getString("next_event")));
                 }
             }
-            
         } catch (SQLException e) {
-            showStatusMessage("Failed to load data from DB.", true);
-            e.printStackTrace(); // For debugging
+            loadStaticDefaults();
+            showStatusMessage("Failed to load data. Using static defaults.", true);
         }
-        
-        // Update counts
         joinedClubsCount = myClubs.size();
-        eventsThisMonthCount = events.size(); // All events for the department
-        pendingApplicationsCount = myAppliedEvents.size(); // All applied events
+        eventsThisMonthCount = events.size();
     }
 
     private String[] split(String s) {
@@ -247,30 +147,56 @@ public class StudentDashboard { // No longer extends JFrame
         return s.split(",");
     }
 
-    /**
-     * Creates the sidebar panel.
-     * @return The configured JPanel for the sidebar.
-     */
-    private JPanel createSidebar() { 
-        JPanel side = new JPanel(new BorderLayout()); 
-        side.setBackground(pageBg); 
+    private void loadStaticDefaults() {
+        clubs.add(new Club("Computer Science Society", "Learn programming, participate in hackathons.", new String[]{"Alice Kumar","Ravi Patel"}, "Tech Building", "Mar 15"));
+        clubs.add(new Club("Drama Club", "Express creativity through theatre & workshops.", new String[]{"Maya Joseph"}, "Arts Center", "Mar 10"));
+        clubs.add(new Club("Environmental Action Group", "Promote sustainability and conservation initiatives.", new String[]{"Samir Rao","Nina Roy"}, "Student Center", "Mar 20"));
+        clubs.add(new Club("Photography Club", "Workshops, field trips and portfolio building.", new String[]{"Priya Menon"}, "Media Lab", "Mar 18"));
+        clubs.add(new Club("Robotics Club", "Robotics projects, competitions and tutorials.", new String[]{"Arjun Singh"}, "Robotics Lab", "Mar 22"));
+        clubs.add(new Club("Literature Circle", "Book discussions, writing workshops, readings.", new String[]{"Leena Das"}, "Library Hall", "Mar 25"));
+
+        events.add(new EventItem("CS Society Hackathon", "Computer Science Society", new String[]{"Alice Kumar"}, "Tech Building", "2025-03-15", "09:00 AM"));
+        events.add(new EventItem("Drama Auditions", "Drama Club", new String[]{"Maya Joseph"}, "Arts Center", "2025-03-10", "02:00 PM"));
+        events.add(new EventItem("Photography Workshop", "Photography Club", new String[]{"Priya Menon"}, "Media Lab", "2025-03-12", "04:00 PM"));
+        events.add(new EventItem("Robotics Bot Build", "Robotics Club", new String[]{"Arjun Singh"}, "Robotics Lab", "2025-03-22", "10:00 AM"));
+        events.add(new EventItem("Environmental Cleanup", "Environmental Action Group", new String[]{"Samir Rao"}, "Student Center", "2025-03-20", "08:00 AM"));
+        events.add(new EventItem("Poetry Night", "Literature Circle", new String[]{"Leena Das"}, "Library Hall", "2025-03-25", "06:30 PM"));
+
+        notifications.add(new NotificationItem("Drama Club","Pop-up Play Rehearsal","Arts Center","2025-03-09","10:00 AM"));
+        notifications.add(new NotificationItem("Photography Club","Sprint Photo Walk","Campus Grounds","2025-03-11","07:00 AM"));
+        notifications.add(new NotificationItem("Robotics Club","Unexpected Workshop","Robotics Lab","2025-03-12","11:00 AM"));
+        notifications.add(new NotificationItem("CS Society","Lightning Talk","Tech Building","2025-03-13","03:00 PM"));
+        notifications.add(new NotificationItem("Env Action","Emergency Cleanup","Riverside","2025-03-14","06:00 AM"));
+
+        myClubs.add(clubs.get(0));
+        myClubs.add(clubs.get(1));
+        myClubs.add(clubs.get(2));
+
+        joinedClubsCount = myClubs.size();
+        eventsThisMonthCount = events.size();
+    }
+
+    private JPanel createSidebar() {
+        JPanel side = new JPanel(new BorderLayout()); // Use BorderLayout
+        side.setBackground(new Color(248,249,251));
         side.setPreferredSize(new Dimension(sidebarWidth, 0));
         side.setBorder(new EmptyBorder(18, 12, 18, 12));
 
+        // Panel to hold nav and indicator using null layout
         JPanel topContent = new JPanel(null);
         topContent.setOpaque(false);
 
         JPanel navPanel = new JPanel();
         navPanel.setOpaque(false);
         navPanel.setLayout(new BoxLayout(navPanel, BoxLayout.Y_AXIS));
-        navPanel.setBounds(10, 30, sidebarWidth - 20, 300); 
+        navPanel.setBounds(10, 30, sidebarWidth - 20, 300); // Bounds relative to topContent
         navButtons = new JButton[navNames.length];
         for (int i = 0; i < navNames.length; i++) {
             JButton b = new JButton(navNames[i]);
             b.setAlignmentX(Component.LEFT_ALIGNMENT);
             b.setHorizontalAlignment(SwingConstants.LEFT);
             b.setFocusPainted(false);
-            b.setBackground(pageBg); 
+            b.setBackground(new Color(248,249,251));
             b.setBorder(new EmptyBorder(10, 12, 10, 12));
             b.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
             applyAppFont(b, Font.PLAIN, 14);
@@ -284,40 +210,34 @@ public class StudentDashboard { // No longer extends JFrame
             navPanel.add(Box.createRigidArea(new Dimension(0, 6)));
             navButtons[i] = b;
         }
-        topContent.add(navPanel); 
+        topContent.add(navPanel); // Add navPanel to topContent
         indicator = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(Color.WHITE); 
+                g2.setColor(new Color(233,241,255));
                 g2.fillRoundRect(4, 0, 6, 44, 6, 6);
                 g2.dispose();
             }
         };
         indicator.setOpaque(false);
         indicator.setSize(14, 44);
-        indicator.setLocation(0, 30); 
-        topContent.add(indicator); 
+        indicator.setLocation(0, 30); // Location relative to topContent
+        topContent.add(indicator); // Add indicator to topContent
         
-        side.add(topContent, BorderLayout.CENTER); 
+        side.add(topContent, BorderLayout.CENTER); // Add topContent to CENTER
 
         JButton logout = new JButton("Logout");
-        makeButtonTransparent(logout); 
+        makeButtonTransparent(logout); // Use the helper method
         applyAppFont(logout, Font.BOLD, 13);
         logout.setHorizontalAlignment(SwingConstants.LEFT);
-        logout.setBorder(new EmptyBorder(10, 2, 10, 2)); 
-        
-        // --- LOGOUT BUTTON CHANGED ---
-        // This now calls the static show method of LoginRegisterUI,
-        // passing the parent frame to switch the panel back to login.
+        logout.setBorder(new EmptyBorder(10, 2, 10, 2)); // Add padding
         logout.addActionListener(e -> {
-            // Assuming LoginRegisterUI has this static method:
-            LoginRegisterUI.show(parentFrame); 
+            new Logout();
+            showStatusMessage("Logout placeholder instantiated.", false); // Use status label
         });
-        // --- END OF CHANGE ---
-
-        side.add(logout, BorderLayout.SOUTH); 
+        side.add(logout, BorderLayout.SOUTH); // Add to SOUTH
         
         indicatorTimer = new Timer(8, null);
         indicatorTimer.addActionListener(e -> {
@@ -330,7 +250,7 @@ public class StudentDashboard { // No longer extends JFrame
                 int step = Math.max(1, Math.abs(indicatorTargetY - y) / 6);
                 y += dir * step;
                 indicator.setLocation(indicator.getX(), y);
-                topContent.repaint(); 
+                topContent.repaint(); // Repaint topContent
             }
         });
         return side;
@@ -345,11 +265,11 @@ public class StudentDashboard { // No longer extends JFrame
         for (int i = 0; i < navButtons.length; i++) {
             JButton b = navButtons[i];
             if (i == index) {
-                b.setBackground(Color.WHITE); 
+                b.setBackground(new Color(233,241,255));
                 b.setForeground(accentBlue);
                 applyAppFont(b, Font.BOLD, 14);
             } else {
-                b.setBackground(pageBg); 
+                b.setBackground(new Color(248,249,251));
                 b.setForeground(Color.BLACK);
                 applyAppFont(b, Font.PLAIN, 14);
             }
@@ -361,7 +281,7 @@ public class StudentDashboard { // No longer extends JFrame
         JPanel top = new JPanel(new BorderLayout());
         top.setBackground(pageBg);
         top.setBorder(new EmptyBorder(12, 12, 12, 12));
-        JLabel dashboardLabel = new JLabel("Student Dashboard"); 
+        JLabel dashboardLabel = new JLabel("Dashboard");
         dashboardLabel.setOpaque(true);
         dashboardLabel.setPreferredSize(new Dimension(420, 34));
         dashboardLabel.setBorder(new LineRoundedBorder(8, cardBorder, 1));
@@ -374,44 +294,48 @@ public class StudentDashboard { // No longer extends JFrame
         left.add(dashboardLabel);
         top.add(left, BorderLayout.WEST);
 
-        JPanel right = new JPanel(new GridBagLayout()); 
+        JPanel right = new JPanel(new GridBagLayout()); // Use GridBagLayout
         right.setOpaque(false);
 
         statusLabel = new JLabel(" ");
         applyAppFont(statusLabel, Font.BOLD, 13);
         statusLabel.setOpaque(true);
-        statusLabel.setBackground(new Color(220, 255, 220)); 
+        statusLabel.setBackground(new Color(220, 255, 220)); // Default green
         statusLabel.setBorder(new EmptyBorder(6, 10, 6, 10));
         statusLabel.setVisible(false);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(0, 0, 0, 15); 
+        gbc.insets = new Insets(0, 0, 0, 15); // Margin to the right
         gbc.gridx = 0;
         gbc.gridy = 0;
         right.add(statusLabel, gbc);
 
+        JLabel name = new JLabel("John Doe");
+        applyAppFont(name, Font.PLAIN, 13);
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridx = 1;
+        right.add(name, gbc);
+        
         top.add(right, BorderLayout.EAST);
 
+        // Timer to hide the status label
         statusTimer = new Timer(3000, e -> statusLabel.setVisible(false));
         statusTimer.setRepeats(false);
 
         return top;
     }
 
+    // New method to show status messages
     private void showStatusMessage(String message, boolean isError) {
-        if (statusTimer == null) { // Guard against early calls
-             System.err.println("StatusLabel not ready: " + message);
-             return;
-        }
         if (statusTimer.isRunning()) {
             statusTimer.stop();
         }
         statusLabel.setText(message);
         if (isError) {
-            statusLabel.setBackground(new Color(255, 220, 220)); 
+            statusLabel.setBackground(new Color(255, 220, 220)); // Reddish
             statusLabel.setForeground(Color.RED.darker());
         } else {
-            statusLabel.setBackground(new Color(220, 255, 220)); 
+            statusLabel.setBackground(new Color(220, 255, 220)); // Greenish
             statusLabel.setForeground(Color.GREEN.darker());
         }
         statusLabel.setVisible(true);
@@ -425,7 +349,7 @@ public class StudentDashboard { // No longer extends JFrame
         panel.setBorder(new EmptyBorder(16,16,16,16));
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
-        JLabel welcome = new JLabel("<html><div style='font-size:20px;'><b>Welcome</b></div><div style='color:black;'>Discover new opportunities and stay connected with your clubs.</div></html>");
+        JLabel welcome = new JLabel("<html><div style='font-size:20px;'><b>Welcome Back, John!</b></div><div style='color:#6b7280;'>Discover new opportunities and stay connected with your clubs.</div></html>");
         applyAppFont(welcome, Font.PLAIN, 14);
         header.add(welcome, BorderLayout.WEST);
         JPanel stats = new JPanel(new FlowLayout(FlowLayout.LEFT, 18, 0));
@@ -433,6 +357,7 @@ public class StudentDashboard { // No longer extends JFrame
         stats.setBorder(new EmptyBorder(12, 0, 12, 0));
         RoundedPanel joined = createStatCardClickable(String.valueOf(joinedClubsCount), "Joined Clubs", new Color(58,78,237), () -> { cardLayout.show(contentCards, "Browse Clubs"); animateIndicatorTo(1); });
         RoundedPanel eventsStat = createStatCardClickable(String.valueOf(eventsThisMonthCount), "Events This Month", new Color(118,81,255), () -> { cardLayout.show(contentCards, "Events"); animateIndicatorTo(2); });
+        // Removed Pending Applications card
         stats.add(joined); 
         stats.add(eventsStat);
         header.add(stats, BorderLayout.SOUTH);
@@ -450,9 +375,7 @@ public class StudentDashboard { // No longer extends JFrame
         center.add(discoverTitle, BorderLayout.NORTH);
         JPanel gridPanel = new JPanel(new GridLayout(2,3,16,16));
         gridPanel.setOpaque(false);
-        for (Club c : recentClubs) {
-            gridPanel.add(createMinimalClubCard(c));
-        }
+        for (int i = 0; i < Math.min(6, clubs.size()); i++) gridPanel.add(createMinimalClubCard(clubs.get(i)));
         JScrollPane gridScroll = new JScrollPane(gridPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         gridScroll.getViewport().setBackground(pageBg);
         gridScroll.setBorder(null);
@@ -464,13 +387,13 @@ public class StudentDashboard { // No longer extends JFrame
         RoundedPanel upCard = new RoundedPanel(12, pageBg);
         upCard.setLayout(new BorderLayout());
         upCard.setBorder(new EmptyBorder(16,16,16,16));
-        JLabel upTitle = new JLabel("Upcoming Events (My Applications)"); 
+        JLabel upTitle = new JLabel("Upcoming Events");
         applyAppFont(upTitle, Font.BOLD, 14);
         upCard.add(upTitle, BorderLayout.NORTH);
         JPanel evList = new JPanel();
         evList.setOpaque(false);
         evList.setLayout(new BoxLayout(evList, BoxLayout.Y_AXIS));
-        for (EventItem ev : myAppliedEvents) {
+        for (EventItem ev : events) {
             evList.add(createUpcomingEventRow(ev));
             evList.add(Box.createRigidArea(new Dimension(0,8)));
         }
@@ -497,7 +420,7 @@ public class StudentDashboard { // No longer extends JFrame
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(pageBg);
         panel.setBorder(new EmptyBorder(16,16,16,16));
-        JLabel title = new JLabel("Browse Clubs (Your Department)"); 
+        JLabel title = new JLabel("Browse Clubs");
         applyAppFont(title, Font.BOLD, 18);
         panel.add(title, BorderLayout.NORTH);
         JPanel grid = new JPanel(new GridLayout(0,3,12,12));
@@ -520,6 +443,7 @@ public class StudentDashboard { // No longer extends JFrame
             RoundedPanel row = new RoundedPanel(8, pageBg);
             row.setLayout(new BorderLayout());
             row.setBorder(new EmptyBorder(10,10,10,10));
+            // Simplified label to show only club name
             JLabel lab = new JLabel("<html><b>" + c.name + "</b></html>");
             applyAppFont(lab, Font.PLAIN, 13);
             row.add(lab, BorderLayout.CENTER);
@@ -543,7 +467,7 @@ public class StudentDashboard { // No longer extends JFrame
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(pageBg);
         panel.setBorder(new EmptyBorder(16,16,16,16));
-        JLabel title = new JLabel("Events (Your Department)"); 
+        JLabel title = new JLabel("Events");
         applyAppFont(title, Font.BOLD, 18);
         panel.add(title, BorderLayout.NORTH);
         JPanel grid = new JPanel(new GridLayout(0,3,12,12));
@@ -560,7 +484,7 @@ public class StudentDashboard { // No longer extends JFrame
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(pageBg);
         panel.setBorder(new EmptyBorder(16,16,16,16));
-        JLabel title = new JLabel("Notifications (From Your Department's Events)"); 
+        JLabel title = new JLabel("Notifications");
         applyAppFont(title, Font.BOLD, 18);
         panel.add(title, BorderLayout.NORTH);
         JPanel list = new JPanel();
@@ -570,7 +494,7 @@ public class StudentDashboard { // No longer extends JFrame
         if (notifications.isEmpty()) {
             JLabel none = new JLabel("No Notifications");
             applyAppFont(none, Font.PLAIN, 14);
-            none.setForeground(Color.BLACK); 
+            none.setForeground(Color.GRAY);
             JPanel wrap = new JPanel(new FlowLayout(FlowLayout.LEFT));
             wrap.setOpaque(false);
             wrap.add(none);
@@ -598,7 +522,7 @@ public class StudentDashboard { // No longer extends JFrame
         bigLbl.setForeground(color);
         JLabel lbl = new JLabel(small);
         applyAppFont(lbl, Font.PLAIN, 12);
-        lbl.setForeground(Color.BLACK); 
+        lbl.setForeground(Color.GRAY);
         JPanel left = new JPanel(new BorderLayout());
         left.setOpaque(false);
         left.add(bigLbl, BorderLayout.NORTH);
@@ -617,7 +541,7 @@ public class StudentDashboard { // No longer extends JFrame
         bigLbl.setForeground(color);
         JLabel lbl = new JLabel(small);
         applyAppFont(lbl, Font.PLAIN, 12);
-        lbl.setForeground(Color.BLACK); 
+        lbl.setForeground(Color.GRAY);
         JPanel left = new JPanel(new BorderLayout());
         left.setOpaque(false);
         left.add(bigLbl, BorderLayout.NORTH);
@@ -638,7 +562,7 @@ public class StudentDashboard { // No longer extends JFrame
         card.setPreferredSize(new Dimension(200,120));
         JLabel t = new JLabel("<html><b>" + c.name + "</b></html>");
         applyAppFont(t, Font.BOLD, 13);
-        JTextArea desc = new JTextArea(c.description); 
+        JTextArea desc = new JTextArea(c.shortDesc);
         desc.setLineWrap(true);
         desc.setWrapStyleWord(true);
         desc.setOpaque(false);
@@ -658,10 +582,11 @@ public class StudentDashboard { // No longer extends JFrame
         RoundedPanel card = new RoundedPanel(12, Color.WHITE);
         card.setLayout(new BorderLayout());
         card.setBorder(new EmptyBorder(10,10,10,10));
-        card.setPreferredSize(new Dimension(200, 80)); 
+        card.setPreferredSize(new Dimension(200, 80)); // Reduced height
         JLabel title = new JLabel("<html><b style='font-size:14px;'>" + c.name + "</b></html>");
         applyAppFont(title, Font.BOLD, 14);
         title.setHorizontalAlignment(SwingConstants.CENTER);
+        // Removed description
         card.add(title, BorderLayout.CENTER);
         card.addMouseListener(new MouseAdapter(){
             @Override public void mouseClicked(MouseEvent e){ openClubPopup(c); }
@@ -675,10 +600,11 @@ public class StudentDashboard { // No longer extends JFrame
         RoundedPanel card = new RoundedPanel(12, Color.WHITE);
         card.setLayout(new BorderLayout());
         card.setBorder(new EmptyBorder(10,10,10,10));
-        card.setPreferredSize(new Dimension(200, 80)); 
+        card.setPreferredSize(new Dimension(200, 80)); // Same dimensions as club card
         JLabel title = new JLabel("<html><b style='font-size:14px;'>" + e.title + "</b></html>");
         applyAppFont(title, Font.BOLD, 14);
         title.setHorizontalAlignment(SwingConstants.CENTER);
+        // Removed other info
         card.add(title, BorderLayout.CENTER);
         card.addMouseListener(new MouseAdapter(){
             @Override public void mouseClicked(MouseEvent ev){ openEventPopup(e); }
@@ -695,9 +621,10 @@ public class StudentDashboard { // No longer extends JFrame
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
         JLabel title = new JLabel("<html><b>" + ev.title + "</b></html>");
         applyAppFont(title, Font.PLAIN, 13);
+        // Changed to show only date
         JLabel meta = new JLabel(ev.date);
         applyAppFont(meta, Font.PLAIN, 12);
-        meta.setForeground(Color.BLACK); 
+        meta.setForeground(Color.GRAY);
         row.add(title, BorderLayout.WEST);
         row.add(meta, BorderLayout.EAST);
         row.addMouseListener(new MouseAdapter() {
@@ -717,7 +644,7 @@ public class StudentDashboard { // No longer extends JFrame
         applyAppFont(title, Font.BOLD, 14);
         JLabel meta = new JLabel(n.venue + " | " + n.date + " | " + n.time);
         applyAppFont(meta, Font.PLAIN, 12);
-        meta.setForeground(Color.BLACK); 
+        meta.setForeground(Color.GRAY);
         JButton view = new JButton("View");
         makeButtonTransparent(view);
         applyAppFont(view, Font.PLAIN, 13);
@@ -749,26 +676,25 @@ public class StudentDashboard { // No longer extends JFrame
         return row;
     }
 
-    /**
-     * Creates the glass pane panel.
-     */
     private void createGlassPane() {
         glass = new JPanel(null);
         glass.setOpaque(true);
         glass.setBackground(new Color(0,0,0,100)); // Dims background
         glass.setVisible(false);
         glass.addMouseListener(new MouseAdapter(){});
+        setGlassPane(glass);
     }
 
     // Helper method to resize the popup
     private void resizePopup(boolean maximizedLike) {
         if (popupPanel == null) return;
-        Dimension size = layeredPane.getSize(); // Use layeredPane size
         if (maximizedLike) {
+            Dimension size = getContentPane().getSize();
             popupPanel.setSize((int)(size.width*0.96), (int)(size.height*0.92));
         } else {
             popupPanel.setSize(720,420); // Default smaller size
         }
+        Dimension size = getContentPane().getSize();
         int x = (size.width - popupPanel.getWidth())/2;
         int y = (size.height - popupPanel.getHeight())/2;
         popupPanel.setLocation(x,y);
@@ -800,7 +726,7 @@ public class StudentDashboard { // No longer extends JFrame
         JLabel title = new JLabel("<html><div style='font-size:18px;'><b>" + c.name + "</b></div></html>");
         applyAppFont(title, Font.BOLD, 16);
         p.add(title, BorderLayout.NORTH);
-        JTextArea desc = new JTextArea(c.description + "\n\nLeaders: " + c.leadersString());
+        JTextArea desc = new JTextArea(c.shortDesc + "\n\nLeaders: " + c.leadersString() + "\nVenue: " + c.location);
         desc.setEditable(false); desc.setLineWrap(true); desc.setWrapStyleWord(true);
         desc.setOpaque(false);
         applyAppFont(desc, Font.PLAIN, 13);
@@ -815,33 +741,16 @@ public class StudentDashboard { // No longer extends JFrame
         back.addActionListener(e -> closePopup());
         join.addActionListener(e -> {
             if (dbConn != null) {
-                String sql = "INSERT INTO my_clubs(nid, club_name) " +
-                             "SELECT ?, ? WHERE NOT EXISTS " +
-                             "(SELECT 1 FROM my_clubs WHERE nid = ? AND club_name = ?)";
-                try (PreparedStatement ps = dbConn.prepareStatement(sql)) {
-                    ps.setString(1, this.nid);
-                    ps.setString(2, c.name);
-                    ps.setString(3, this.nid);
-                    ps.setString(4, c.name);
-                    int rowsAffected = ps.executeUpdate();
-                    
-                    if (rowsAffected > 0) {
-                        myClubs.add(c); 
-                        joinedClubsCount = myClubs.size();
-                        updateDashboardCounts(); 
-                        showStatusMessage("Joined " + c.name, false);
-                    } else {
-                        showStatusMessage("You have already joined this club.", true);
-                    }
-                } catch (SQLException ex) {
+                try (PreparedStatement ps = dbConn.prepareStatement("INSERT INTO my_clubs(club_id) VALUES((SELECT id FROM clubs WHERE name=? LIMIT 1))")) {
+                    ps.setString(1,c.name); ps.executeUpdate();
+                } catch (SQLException ignored) {
                     showStatusMessage("DB error joining club.", true);
                 }
-            } else {
-                myClubs.add(c);
-                joinedClubsCount = myClubs.size();
-                updateDashboardCounts();
-                showStatusMessage("Joined " + c.name, false); 
             }
+            myClubs.add(c);
+            joinedClubsCount = myClubs.size();
+            updateDashboardCounts();
+            showStatusMessage("Joined " + c.name, false); // Use status label
             closePopup();
         });
         btns.add(back); btns.add(join);
@@ -868,37 +777,17 @@ public class StudentDashboard { // No longer extends JFrame
         applyAppFont(back, Font.BOLD, 13); applyAppFont(apply, Font.BOLD, 13);
         back.addActionListener(e -> closePopup());
         apply.addActionListener(e -> {
+            pendingApplicationsCount++;
             if (dbConn != null) {
-                String sql = "INSERT INTO my_events(nid, club_name, event_name, date, time) " +
-                             "SELECT ?, ?, ?, ?, ? WHERE NOT EXISTS " +
-                             "(SELECT 1 FROM my_events WHERE nid = ? AND event_name = ?)";
-                try (PreparedStatement ps = dbConn.prepareStatement(sql)) {
-                    ps.setString(1, this.nid);
-                    ps.setString(2, ev.clubName);
-                    ps.setString(3, ev.title);
-                    ps.setString(4, ev.date);
-                    ps.setString(5, ev.time);
-                    ps.setString(6, this.nid);
-                    ps.setString(7, ev.title);
-                    
-                    int rowsAffected = ps.executeUpdate();
-                    
-                    if (rowsAffected > 0) {
-                        myAppliedEvents.add(ev); 
-                        pendingApplicationsCount = myAppliedEvents.size();
-                        updateDashboardCounts(); 
-                        showStatusMessage("Applied to " + ev.title, false);
-                    } else {
-                        showStatusMessage("Already applied to this event.", true);
-                    }
-                } catch (SQLException ex) {
+                try (PreparedStatement ps = dbConn.prepareStatement("INSERT INTO events(title, club_name, leaders, venue, date, time) VALUES(?,?,?,?,?,?)")) {
+                    ps.setString(1, ev.title); ps.setString(2, ev.clubName); ps.setString(3, String.join(",", ev.leaders)); ps.setString(4, ev.venue); ps.setString(5, ev.date); ps.setString(6, ev.time);
+                    ps.executeUpdate();
+                } catch (SQLException ignored) {
                     showStatusMessage("DB error applying to event.", true);
                 }
-            } else {
-                pendingApplicationsCount++;
-                updateDashboardCounts();
-                showStatusMessage("Applied to " + ev.title, false); 
             }
+            updateDashboardCounts();
+            showStatusMessage("Applied to " + ev.title, false); // Use status label
             closePopup();
         });
         btns.add(back); btns.add(apply);
@@ -907,12 +796,13 @@ public class StudentDashboard { // No longer extends JFrame
     }
 
     private void openMyClubPopup(Club c) {
+        // This 'p' is the original club details panel
         JPanel p = new JPanel(new BorderLayout());
         p.setOpaque(false);
         JLabel title = new JLabel("<html><div style='font-size:18px;'><b>" + c.name + "</b></div></html>");
         applyAppFont(title, Font.BOLD, 16);
         p.add(title, BorderLayout.NORTH);
-        JTextArea desc = new JTextArea(c.description + "\n\nLeaders: " + c.leadersString());
+        JTextArea desc = new JTextArea(c.shortDesc + "\n\nLeaders: " + c.leadersString() + "\nVenue: " + c.location);
         desc.setEditable(false); desc.setLineWrap(true); desc.setWrapStyleWord(true); desc.setOpaque(false);
         applyAppFont(desc, Font.PLAIN, 13);
         p.add(desc, BorderLayout.CENTER);
@@ -920,48 +810,12 @@ public class StudentDashboard { // No longer extends JFrame
         btns.setOpaque(false);
         JButton back = new JButton("Back");
         JButton showEvents = new JButton("Show Events");
-        JButton leave = new JButton("Leave Club"); 
-        
-        makeButtonTransparent(back); 
-        makeButtonTransparent(showEvents);
-        makeButtonTransparent(leave);
-        leave.setForeground(Color.RED.darker()); 
-        
-        back.setPreferredSize(new Dimension(88,38)); 
-        showEvents.setPreferredSize(new Dimension(98,38));
-        leave.setPreferredSize(new Dimension(98, 38));
-        
-        applyAppFont(back, Font.BOLD, 13); 
-        applyAppFont(showEvents, Font.BOLD, 13);
-        applyAppFont(leave, Font.BOLD, 13);
-        
+        makeButtonTransparent(back); makeButtonTransparent(showEvents);
+        back.setPreferredSize(new Dimension(88,38)); showEvents.setPreferredSize(new Dimension(98,38));
+        applyAppFont(back, Font.BOLD, 13); applyAppFont(showEvents, Font.BOLD, 13);
         back.addActionListener(e -> closePopup());
-        
-        leave.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(dashboardPanel, "Are you sure you want to leave " + c.name + "?", "Confirm Leave", JOptionPane.YES_NO_OPTION);
-            if (confirm == JOptionPane.YES_OPTION) {
-                if (dbConn != null) {
-                    try (PreparedStatement ps = dbConn.prepareStatement("DELETE FROM my_clubs WHERE nid = ? AND club_name = ?")) {
-                        ps.setString(1, this.nid);
-                        ps.setString(2, c.name);
-                        int rowsAffected = ps.executeUpdate();
-                        if (rowsAffected > 0) {
-                            myClubs.remove(c); 
-                            joinedClubsCount = myClubs.size();
-                            updateDashboardCounts(); 
-                            showStatusMessage("Left " + c.name, false);
-                            closePopup();
-                        } else {
-                            showStatusMessage("Could not leave club.", true);
-                        }
-                    } catch (SQLException ex) {
-                        showStatusMessage("DB error leaving club.", true);
-                    }
-                }
-            }
-        });
-        
         showEvents.addActionListener(e -> {
+            // This 'wrapper' is the new event list panel
             JPanel wrapper = new JPanel(new BorderLayout()); 
             wrapper.setOpaque(false);
             JLabel h = new JLabel("<html><b>Events for " + c.name + "</b></html>");
@@ -973,7 +827,7 @@ public class StudentDashboard { // No longer extends JFrame
             list.setOpaque(false);
             list.setLayout(new BoxLayout(list, BoxLayout.Y_AXIS));
             boolean found = false;
-            for (EventItem ev : events) { 
+            for (EventItem ev : events) {
                 if (ev.clubName.equalsIgnoreCase(c.name)) {
                     JPanel row = new JPanel(new BorderLayout());
                     row.setOpaque(false);
@@ -981,7 +835,7 @@ public class StudentDashboard { // No longer extends JFrame
                     applyAppFont(t, Font.BOLD, 14);
                     JLabel meta = new JLabel(ev.date + " | " + ev.time + " | " + ev.venue);
                     applyAppFont(meta, Font.PLAIN, 12);
-                    meta.setForeground(Color.BLACK); 
+                    meta.setForeground(Color.GRAY);
                     row.add(t, BorderLayout.WEST); row.add(meta, BorderLayout.EAST);
                     list.add(row); list.add(Box.createRigidArea(new Dimension(0,8)));
                     found = true;
@@ -990,7 +844,7 @@ public class StudentDashboard { // No longer extends JFrame
             if (!found) {
                 JLabel none = new JLabel("No Events Added for this club");
                 applyAppFont(none, Font.PLAIN, 14);
-                none.setForeground(Color.BLACK); 
+                none.setForeground(Color.GRAY);
                 JPanel wrap = new JPanel(new FlowLayout(FlowLayout.LEFT)); wrap.setOpaque(false); wrap.add(none);
                 list.add(wrap);
             }
@@ -998,6 +852,7 @@ public class StudentDashboard { // No longer extends JFrame
             sc.getViewport().setBackground(pageBg); sc.setBorder(null);
             wrapper.add(sc, BorderLayout.CENTER);
 
+            // Add a "Back" button to this event list panel
             JPanel eventBtns = new JPanel(new FlowLayout(FlowLayout.CENTER, 16, 8));
             eventBtns.setOpaque(false);
             JButton eventBack = new JButton("Back");
@@ -1005,26 +860,26 @@ public class StudentDashboard { // No longer extends JFrame
             eventBack.setPreferredSize(new Dimension(88, 38));
             applyAppFont(eventBack, Font.BOLD, 13);
             eventBack.addActionListener(backEvent -> {
+                // Replace popupPanel's content back to the original 'p'
                 popupPanel.removeAll();
                 popupPanel.add(p, BorderLayout.CENTER);
-                resizePopup(true); 
+                resizePopup(true); // Restore to maximized
                 popupPanel.revalidate();
                 popupPanel.repaint();
             });
             eventBtns.add(eventBack);
             wrapper.add(eventBtns, BorderLayout.SOUTH);
 
+            // Replace the popup's content with the new 'wrapper'
             popupPanel.removeAll();
             popupPanel.add(wrapper, BorderLayout.CENTER);
-            resizePopup(false); 
+            resizePopup(false); // Make it smaller
             popupPanel.revalidate();
             popupPanel.repaint();
         });
-        btns.add(back); 
-        btns.add(showEvents);
-        btns.add(leave); 
+        btns.add(back); btns.add(showEvents);
         p.add(btns, BorderLayout.SOUTH);
-        showPopup(p, true); 
+        showPopup(p, true); // Show the initial club popup as maximized
     }
 
     private void closePopup() {
@@ -1034,19 +889,8 @@ public class StudentDashboard { // No longer extends JFrame
             repaint();
         }
     }
-    
-    // repaint() is a method of Component, which this class is not.
-    // Call repaint on dashboardPanel instead.
-    private void repaint() {
-        if (dashboardPanel != null) {
-            dashboardPanel.repaint();
-        }
-    }
-
 
     private void updateDashboardCounts() {
-        loadDataFromDB(); 
-        
         String visible = getCurrentVisibleCard();
         contentCards.removeAll();
         contentCards.add(createDashboardPanel(), "Dashboard");
@@ -1071,10 +915,7 @@ public class StudentDashboard { // No longer extends JFrame
         b.setContentAreaFilled(false);
         b.setBorder(null);
         b.setForeground(accentBlue);
-        b.addMouseListener(new MouseAdapter(){ 
-            @Override public void mouseEntered(MouseEvent e){ b.setForeground(new Color(20,70,200)); } 
-            @Override public void mouseExited(MouseEvent e){ b.setForeground(accentBlue); }
-        });
+        b.addMouseListener(new MouseAdapter(){ @Override public void mouseEntered(MouseEvent e){ b.setForeground(new Color(20,70,200)); } @Override public void mouseExited(MouseEvent e){ b.setForeground(accentBlue); }});
     }
 
     private void applyAppFont(Component c, int style, int size) {
@@ -1100,12 +941,7 @@ public class StudentDashboard { // No longer extends JFrame
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setColor(bg); g2.fill(new RoundRectangle2D.Float(0,0,getWidth()-1,getHeight()-1,radius,radius));
-            if (highlight) { 
-                g2.setColor(new Color(120,160,255)); g2.setStroke(new BasicStroke(2f)); 
-            } else { 
-                g2.setColor(cardBorder); 
-                g2.setStroke(new BasicStroke(1f)); 
-            }
+            if (highlight) { g2.setColor(new Color(120,160,255)); g2.setStroke(new BasicStroke(2f)); } else { g2.setColor(new Color(220,220,220)); g2.setStroke(new BasicStroke(1f)); }
             g2.draw(new RoundRectangle2D.Float(1,1,getWidth()-3,getHeight()-3,radius,radius));
             g2.dispose();
             super.paintComponent(g);
@@ -1125,102 +961,19 @@ public class StudentDashboard { // No longer extends JFrame
     }
 
     private class SidebarHoverAdapter extends MouseAdapter {
-        private final JButton btn; 
-        private Color normal = pageBg; 
-        private Color hover = new Color(238,243,255);
+        private final JButton btn; private Color normal = new Color(248,249,251); private Color hover = new Color(238,243,255);
         public SidebarHoverAdapter(JButton b) { btn = b; }
         @Override public void mouseEntered(MouseEvent e){ if (btn.getBackground().equals(normal)) btn.setBackground(hover); }
-        @Override public void mouseExited(MouseEvent e){ Color sel = Color.WHITE; if (!btn.getBackground().equals(sel)) btn.setBackground(normal); } 
-    }
-    
-    /**
-     * Static show method to be called from LoginRegisterUI.
-     * This method creates the dashboard and injects its panel into the parent frame.
-     * @param parent The main application JFrame
-     * @param nid The student's NID (e.g., "STUABC123")
-     */
-    public static void show(JFrame parent, String nid) {
-        if (parent == null) return;
-        
-        try { 
-            FlatLightLaf.setup(); 
-        } catch (Exception ex) { 
-            System.err.println("FlatLaf not found; add JAR to classpath."); 
-        }
-        
-        SwingUtilities.invokeLater(() -> {
-            // 1. Maximize the parent frame
-            parent.setExtendedState(JFrame.MAXIMIZED_BOTH);
-            
-            // 2. Create the dashboard instance, passing the parent frame
-            StudentDashboard dashboard = new StudentDashboard(parent, nid);
-            
-            // 3. Get the dashboard's main panel
-            Container dashboardPane = dashboard.getContentPane();
-            
-            // 4. Set the main frame's content to be the dashboard panel
-            parent.getContentPane().removeAll();
-            parent.getContentPane().add(dashboardPane, BorderLayout.CENTER);
-            parent.revalidate();
-            parent.repaint();
-        });
+        @Override public void mouseExited(MouseEvent e){ Color sel = new Color(233,241,255); if (!btn.getBackground().equals(sel)) btn.setBackground(normal); }
     }
 
-    // --- Inner Data Classes ---
+    public static void show(JFrame parent) {
+        try { FlatLightLaf.setup(); } catch (Exception ex) { System.err.println("FlatLaf not found; add JAR to classpath."); }
+        SwingUtilities.invokeLater(() -> new CopyOfStudentDashboard4());
+    }
 
-    private class Club { 
-        int id; 
-        String name, description; 
-        String[] leaders; 
-        
-        Club(int id, String name, String description, String[] leaders) {
-            this.id = id;
-            this.name = name;
-            this.description = description;
-            this.leaders = leaders;
-        } 
-        
-        String leadersString() { 
-            if (leaders==null||leaders.length==0) return "N/A"; 
-            StringBuilder sb=new StringBuilder(); 
-            for (int i=0;i<leaders.length;i++){ 
-                sb.append(leaders[i]); 
-                if (i<leaders.length-1) sb.append(", "); 
-            } 
-            return sb.toString(); 
-        } 
-    }
-    
-    private class EventItem { 
-        String title, clubName, venue, date, time; 
-        String[] leaders; 
-        
-        EventItem(String t,String c,String[] l,String v,String d,String tm){
-            title=t;clubName=c;leaders=l;venue=v;date=d;time=tm;
-        } 
-        
-        String leadersString() { 
-            if (leaders==null||leaders.length==0) return "N/A"; 
-            StringBuilder sb=new StringBuilder(); 
-            for (int i=0;i<leaders.length;i++){ 
-                sb.append(leaders[i]); 
-                if (i<leaders.length-1) sb.append(", "); 
-            } 
-            return sb.toString(); 
-        } 
-    }
-    
-    private class NotificationItem { 
-        String club,eventName,venue,date,time; 
-        NotificationItem(String a,String b,String c,String d,String e){
-            club=a;eventName=b;venue=c;date=d;time=e;
-        } 
-    }
+    private class Club { String name, shortDesc, location, next; String[] leaders; Club(String a,String b,String[] c,String d,String e){name=a;shortDesc=b;leaders=c;location=d;next=e;} String leadersString(){ if (leaders==null||leaders.length==0) return ""; StringBuilder sb=new StringBuilder(); for (int i=0;i<leaders.length;i++){ sb.append(leaders[i]); if (i<leaders.length-1) sb.append(", "); } return sb.toString(); } }
+    private class EventItem { String title, clubName, venue, date, time; String[] leaders; EventItem(String t,String c,String[] l,String v,String d,String tm){title=t;clubName=c;leaders=l;venue=v;date=d;time=tm;} String leadersString(){ if (leaders==null||leaders.length==0) return ""; StringBuilder sb=new StringBuilder(); for (int i=0;i<leaders.length;i++){ sb.append(leaders[i]); if (i<leaders.length-1) sb.append(", "); } return sb.toString(); } }
+    private class NotificationItem { String club,eventName,venue,date,time; NotificationItem(String a,String b,String c,String d,String e){club=a;eventName=b;venue=c;date=d;time=e;} }
 }
-// Assuming LoginRegisterUI.java has this method, as implied by AdminDashboard.java
-// class LoginRegisterUI {
-//    public static void show(JFrame parent) {
-//        // Logic to show login panel in parent frame
-//    }
-// }
-
+class Logout {}

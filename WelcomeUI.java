@@ -256,8 +256,7 @@ public class WelcomeUI {
                         frame.repaint();
                     } else { // role.equals("S")
                         // This assumes StudentDashboard constructor IS (String)
-                        StudentDashboard studentDashboard = new StudentDashboard();//loggedInNID); 
-                        frame.setContentPane(studentDashboard.getContentPane());
+                        StudentDashboard.show(frame, loggedInNID);
                         frame.revalidate();
                         frame.repaint();
                     }

@@ -5,7 +5,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
 
-public class WelcomeUI {
+public class CopyOfWelcomeUI {
     private JFrame frame;
     private JLabel welcomeLabel;
     private JLabel profileLabel;
@@ -24,18 +24,12 @@ public class WelcomeUI {
     private boolean welcomeComplete = false;
 
     private String role = "S"; // Default to Student
-    
-    // --- (FIX 1) ---
-    // Removed 'abb' and 'institutionName'.
-    // This variable will now store the full nID (e.g., "NXI123" or "NXS456")
-    private String loggedInNID = null; 
-    // ---------------
 
     public static void show(JFrame parentFrame) {
         SwingUtilities.invokeLater(() -> {
             JFrame newFrame = parentFrame != null ? parentFrame : new JFrame("Student Portal");
 
-            WelcomeUI welcomeUI = new WelcomeUI(newFrame);
+            CopyOfWelcomeUI welcomeUI = new CopyOfWelcomeUI(newFrame);
             newFrame.setContentPane(welcomeUI.getContentPane());
             newFrame.revalidate();
             newFrame.repaint();
@@ -48,56 +42,38 @@ public class WelcomeUI {
         });
     }
 
-    public WelcomeUI(JFrame frame) {
+    public CopyOfWelcomeUI(JFrame frame) {
         this.frame = frame;
         fetchUserRoleFromDatabase();
         setupUI();
     }
 
     private void fetchUserRoleFromDatabase() {
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            conn = DriverManager.getConnection(
+            Connection conn = DriverManager.getConnection(
                 "jdbc:mysql://localhost:3306/nexclub", "root", "admin");
 
-            // This query remains the same. It gets the most recent nID.
             String sql = "SELECT nID FROM login ORDER BY login_time DESC LIMIT 1";
-            stmt = conn.prepareStatement(sql);
-            rs = stmt.executeQuery();
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                // --- (FIX 2) ---
-                // Store the full nID in the class variable
-                this.loggedInNID = rs.getString("nID"); 
-                // ---------------
-
-                // Check for role (char at index 2)
-                if (this.loggedInNID != null && this.loggedInNID.length() >= 3) {
-                    char type = this.loggedInNID.charAt(2);
+                String nID = rs.getString("nID");
+                if (nID != null && nID.length() >= 3) {
+                    char type = nID.charAt(2);
                     if (type == 'I') role = "I";
                     else if (type == 'S') role = "S";
                 }
-                
-                // --- (REMOVED) ---
-                // All logic for extracting 'abb' (substring) has been removed.
-                // All queries to the 'institution' table have been removed.
-                // -----------------
             }
 
+            rs.close();
+            stmt.close();
+            conn.close();
         } catch (Exception e) {
             System.err.println("DB Error: " + e.getMessage());
-        } finally {
-            // Ensure resources are closed
-            try { if (rs != null) rs.close(); } catch (SQLException e) {}
-            try { if (stmt != null) stmt.close(); } catch (SQLException e) {}
-            try { if (conn != null) conn.close(); } catch (SQLException e) {}
         }
 
-        // This text setup remains the same
         if (role.equals("I")) {
             fullWelcomeText = "All Set, Your Club Hub is Ready.";
             fullProfileText = "Start managing members, events, and approvals in one place.";
@@ -243,26 +219,8 @@ public class WelcomeUI {
                 opacity -= 0.05f;
                 if (opacity <= 0) {
                     fadeTimer.stop();
-                    
-                    // --- (FIX 3) ---
-                    // This now passes the 'loggedInNID' variable to BOTH constructors.
-                    // The frame-switching logic is used for both roles.
-                    
-                    if (role.equals("I")) {
-                        // This assumes AdminDashboard constructor IS (JFrame, String)
-                        AdminDashboard adminDashboard = new AdminDashboard(frame, loggedInNID);
-                        frame.setContentPane(adminDashboard.getContentPane());
-                        frame.revalidate();
-                        frame.repaint();
-                    } else { // role.equals("S")
-                        // This assumes StudentDashboard constructor IS (String)
-                        StudentDashboard studentDashboard = new StudentDashboard();//loggedInNID); 
-                        frame.setContentPane(studentDashboard.getContentPane());
-                        frame.revalidate();
-                        frame.repaint();
-                    }
-                    // ---------------
-
+                    cardLayout.show(cardPanel, "dashboard");
+                    fadeInTimer.start(); // start fade-in for institution text
                 } else {
                     setPanelOpacity(opacity);
                 }

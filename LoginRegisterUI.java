@@ -4,6 +4,14 @@ import java.awt.event.*;
 import java.sql.*;
 import java.time.LocalDateTime;
 
+// Make sure all these imported classes exist and have the show(JFrame) method
+// import NexClubWelcomePanel;
+// import AdminDashboard;
+// import StudentDashboard;
+// import RegisterPageUI;
+// import ResetPasswordUI;
+// import NexClubSplash;
+
 public class LoginRegisterUI {
 
     public static void show(JFrame parent) {
@@ -139,8 +147,8 @@ public class LoginRegisterUI {
         JPasswordField passField = new JPasswordField();
         passField.setFont(new Font("Microsoft JhengHei", Font.PLAIN, 14));
         passField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
-            BorderFactory.createEmptyBorder(14, 18, 14, 18)));
+                BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
+                BorderFactory.createEmptyBorder(14, 18, 14, 18)));
 
         JLabel toggleIcon = new JLabel("👁");
         toggleIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -174,6 +182,7 @@ public class LoginRegisterUI {
         JLabel loginBtn = new JLabel("Login", SwingConstants.CENTER);
         loginBtn.setFont(new Font("Microsoft JhengHei", Font.BOLD, 15));
         loginBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        
         loginBtn.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 boolean hasError = false;
@@ -183,6 +192,7 @@ public class LoginRegisterUI {
                 userWarning.setText(" ");
                 passWarning.setText(" ");
                 loginStatus.setText(" ");
+                loginStatus.setForeground(Color.RED); // Default to error color
 
                 if (userField.getText().trim().isEmpty()) {
                     userWarning.setText("Please enter your Nex ID");
@@ -195,44 +205,80 @@ public class LoginRegisterUI {
 
                 if (!hasError) {
                     try {
+                        // Assumes NexClubSplash.getConnection() is a valid static method
                         Connection conn = NexClubSplash.getConnection();
                         PreparedStatement stmt = conn.prepareStatement(
-                            "SELECT * FROM register WHERE nID = ? AND Password = BINARY ?");
+                                "SELECT * FROM register WHERE nID = ? AND Password = BINARY ?");
                         stmt.setString(1, id);
                         stmt.setString(2, password);
                         ResultSet rs = stmt.executeQuery();
 
                         if (rs.next()) {
+                            // User is valid. Now check login_count
+                            int currentLoginCount = 0; // This is the count *before* we log in
+                            
                             PreparedStatement checkLogin = conn.prepareStatement(
-                                "SELECT login_count FROM login WHERE nID = ?");
+                                    "SELECT login_count FROM login WHERE nID = ?");
                             checkLogin.setString(1, id);
                             ResultSet loginRs = checkLogin.executeQuery();
 
                             if (loginRs.next()) {
-                                int count = loginRs.getInt("login_count") + 1;
+                                // User exists in login table
+                                currentLoginCount = loginRs.getInt("login_count");
+                                int newCount = currentLoginCount + 1;
                                 PreparedStatement updateLogin = conn.prepareStatement(
-                                    "UPDATE login SET login_time = ?, login_count = ?, Password = ? WHERE nID = ?");
+                                        "UPDATE login SET login_time = ?, login_count = ?, Password = ? WHERE nID = ?");
                                 updateLogin.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
-                                updateLogin.setInt(2, count);
+                                updateLogin.setInt(2, newCount);
                                 updateLogin.setString(3, password);
                                 updateLogin.setString(4, id);
                                 updateLogin.executeUpdate();
                                 updateLogin.close();
                             } else {
+                                // User's first login, insert into login table
+                                // currentLoginCount remains 0
                                 PreparedStatement insertLogin = conn.prepareStatement(
-                                    "INSERT INTO login (nID, Password, login_time, login_count) VALUES (?, ?, ?, ?)");
+                                        "INSERT INTO login (nID, Password, login_time, login_count) VALUES (?, ?, ?, ?)");
                                 insertLogin.setString(1, id);
                                 insertLogin.setString(2, password);
                                 insertLogin.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
-                                insertLogin.setInt(4, 1);
+                                insertLogin.setInt(4, 1); // Set login_count to 1
                                 insertLogin.executeUpdate();
                                 insertLogin.close();
                             }
                             loginRs.close();
-                            NexClubWelcomePanel.show(parent);
+                            checkLogin.close();
+
+                            // --- START: Redirect Logic (This logic is correct) ---
+                            // We check the count *before* the login (currentLoginCount)
+                            if (currentLoginCount < 1) {
+                                // First login (count was 0), go to Welcome Panel
+                                // Added SwingUtilities.invokeLater for safety
+                                SwingUtilities.invokeLater(() -> NexClubWelcomePanel.show(parent));
+                            } else {
+                                // Returning user (count was 1 or more), check role
+                                char roleChar = id.charAt(2); // Get the 'S' or 'I'
+                                if (roleChar == 'I') {
+                                    // 🚨🚨 THE BUG IS LIKELY IN THIS FILE 🚨🚨
+                                    // 🚨 Go to AdminDashboard.java and check its 'show' method
+                                    SwingUtilities.invokeLater(() -> AdminDashboard.show(parent,id));
+                                } else if (roleChar == 'S') {
+                                    // 🚨🚨 THE BUG IS LIKELY IN THIS FILE 🚨🚨
+                                    // 🚨 Go to StudentDashboard.java and check its 'show' method
+                                    SwingUtilities.invokeLater(() -> StudentDashboard.show(parent));
+                                } else {
+                                    // Fallback in case of bad ID data
+                                    loginStatus.setText("Login successful, but role is invalid.");
+                                    SwingUtilities.invokeLater(() -> NexClubWelcomePanel.show(parent)); // Fallback
+                                }
+                            }
+                            // --- END: Redirect Logic ---
+
                         } else {
+                            // Invalid ID or Password
                             userWarning.setText("Invalid Nex ID or Password");
                         }
+                        rs.close();
                         stmt.close();
                     } catch (SQLException ex) {
                         loginStatus.setText("Login failed: " + ex.getMessage());
@@ -251,6 +297,7 @@ public class LoginRegisterUI {
         registerLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         registerLink.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
+                // This call is fine, assuming RegisterPageUI.java exists
                 RegisterPageUI.show(parent);
             }
         });
@@ -270,6 +317,7 @@ public class LoginRegisterUI {
         forgotPassword.setHorizontalAlignment(SwingConstants.CENTER);
         forgotPassword.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
+                // This call is fine, assuming ResetPasswordUI.java exists
                 ResetPasswordUI.show(parent);
             }
         });

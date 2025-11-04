@@ -4,13 +4,6 @@ import java.awt.event.*;
 import java.sql.*;
 import java.time.LocalDateTime;
 
-// Make sure all these imported classes exist and have the show(JFrame) method
-// import NexClubWelcomePanel;
-// import AdminDashboard;
-// import StudentDashboard;
-// import RegisterPageUI;
-// import ResetPasswordUI;
-// import NexClubSplash;
 
 public class LoginRegisterUI {
 

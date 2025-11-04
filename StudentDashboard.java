@@ -10,11 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Timer;
 
-/**
- * StudentDashboard class, refactored to be a class that builds a panel.
- * It is instantiated by LoginRegisterUI after a successful login.
- */
-public class StudentDashboard { // No longer extends JFrame
+
+public class StudentDashboard { 
     private CardLayout cardLayout;
     private JPanel contentCards;
     private JButton[] navButtons;
@@ -1034,9 +1031,7 @@ public class StudentDashboard { // No longer extends JFrame
             repaint();
         }
     }
-    
-    // repaint() is a method of Component, which this class is not.
-    // Call repaint on dashboardPanel instead.
+
     private void repaint() {
         if (dashboardPanel != null) {
             dashboardPanel.repaint();
@@ -1133,12 +1128,7 @@ public class StudentDashboard { // No longer extends JFrame
         @Override public void mouseExited(MouseEvent e){ Color sel = Color.WHITE; if (!btn.getBackground().equals(sel)) btn.setBackground(normal); } 
     }
     
-    /**
-     * Static show method to be called from LoginRegisterUI.
-     * This method creates the dashboard and injects its panel into the parent frame.
-     * @param parent The main application JFrame
-     * @param nid The student's NID (e.g., "STUABC123")
-     */
+   
     public static void show(JFrame parent, String nid) {
         if (parent == null) return;
         
@@ -1217,10 +1207,4 @@ public class StudentDashboard { // No longer extends JFrame
         } 
     }
 }
-// Assuming LoginRegisterUI.java has this method, as implied by AdminDashboard.java
-// class LoginRegisterUI {
-//    public static void show(JFrame parent) {
-//        // Logic to show login panel in parent frame
-//    }
-// }
 
